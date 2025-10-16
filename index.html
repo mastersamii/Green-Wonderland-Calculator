@@ -21,13 +21,13 @@
     --shadow:0 10px 24px rgba(0,0,0,.08);
     --accent:var(--leaf);
 
-    --bg-dark:#101010; 
-    --panel-dark:#1e1e1e; 
-    --card-dark:#242424; 
-    --chip-dark:#2a2a2a; 
-    --text-dark:#e6e6e6; 
-    --border-dark:#3a3a3a;
-    --border-strong-dark:#4a4a4a;
+    --bg-dark:#0e1410; 
+    --panel-dark:#151c16; 
+    --card-dark:#192219; 
+    --chip-dark:#1f2a20; 
+    --text-dark:#e8f3ea; 
+    --border-dark:#2a3b2d;
+    --border-strong-dark:#384a3e;
   }
 
   [data-theme="dark"]{ 
@@ -37,7 +37,7 @@
     --chip:var(--chip-dark); 
     --border:var(--border-dark); 
     --ink:var(--text-dark); 
-    --muted:#b7b7b7; 
+    --muted:#a6b3a8; 
     --border-strong:var(--border-strong-dark);
   }
 
@@ -152,6 +152,10 @@
 
   select, input[type="radio"]{accent-color:var(--accent)}
   select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;box-shadow:inset 0 0 0 1px var(--border-strong)}
+  /* simple option list styling */
+  .option-list{display:grid;gap:8px}
+  .option-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card)}
+  .option-row label{display:flex;align-items:center;gap:8px}
 </style>
 </head>
 <body>
@@ -283,7 +287,7 @@
   </div>
 </div>
 
-<!-- Selector Modal -->
+<!-- Selector Modal (used for bundles and strain picks) -->
 <dialog id="comboModal">
   <div class="modal-header">
     <strong id="comboTitle">Choose Items</strong>
@@ -319,7 +323,7 @@ const MENU = {
     { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
-  /* Quantity-based Flower (not weight menus) */
+  /* Quantity-based Flower */
   flower: [
     { id:'flower-basic-joint',    name:'Basic Joint',     price:100, type:'flower' },
     { id:'flower-basic-quarter',  name:'Basic Quarter',   price:100, type:'flower' },
@@ -334,7 +338,6 @@ const MENU = {
     { id:'gummy-3',   name:'3× Gummies',  price:250, type:'edible' },
   ],
 
-  /* Bundles adjusted to new pricing */
   bundles: [
     { id:'bd-edibles', name:'Edible Duo (pick 2)', price:500, type:'bundle', ediblesIncluded:2,
       description:'Choose any 2 edible packs.' }
@@ -348,7 +351,7 @@ const MENU = {
     { id:'almond-joy', name:'Almond Joy',    price:10,  type:'extra' },
     { id:'rice-kris',  name:'Rice Krispies', price:12,  type:'extra' },
 
-    /* Ingredients / inventory you might still sell or just track */
+    /* Ingredients / inventory */
     { id:'cocoa',      name:'Cocoa Powder',    price:10,  type:'extra' },
     { id:'jolly',      name:'Jolly Ranchers',  price:10,  type:'extra' },
     { id:'weed-seeds', name:'Weed Seeds',      price:10,  type:'extra' },
@@ -358,7 +361,13 @@ const MENU = {
   ]
 };
 
-/* RECIPE MAP for edibles (for ingredients tab) */
+/* Popular strains */
+const STRAINS = [
+  'Gorilla Glue','Gelato','Wedding Cake','Blue Dream','Runtz',
+  'Lemon Haze','OG Kush','Pineapple Express','Sour Diesel','Purple Punch'
+];
+
+/* RECIPE MAP for edibles */
 const RECIPE_MAP = {
   'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
   'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 }
@@ -389,6 +398,9 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
 ========================= */
 function cardHTML(item){
   const needsWizard = (item.ediblesIncluded||0)>0;
+  const needsStrain = item.type==='flower';
+  const action = needsWizard ? `data-wizard="${item.id}"` : needsStrain ? `data-strain="${item.id}"` : `data-add="${item.id}"`;
+  const cta    = needsWizard ? 'Choose &amp; Add' : needsStrain ? 'Pick Strain &amp; Add' : 'Add';
   return `
   <article class="card">
     <h3 style="margin:0">${item.name}</h3>
@@ -400,7 +412,7 @@ function cardHTML(item){
         <button aria-label="inc">+</button>
       </div>
     </div>
-    ${needsWizard?`<button class="btn" data-wizard="${item.id}">Choose &amp; Add</button>`:`<button class="btn" data-add="${item.id}">Add</button>`}
+    <button class="btn" ${action}>${cta}</button>
     ${item.description?`<div class="muted">${item.description}</div>`:''}
   </article>`;  
 }
@@ -422,9 +434,15 @@ function renderCards(){
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
 
     const wizId = card.querySelector('[data-wizard]')?.getAttribute('data-wizard');
+    const strainId = card.querySelector('[data-strain]')?.getAttribute('data-strain');
     if(wizId){
       const item = all.find(i=>i.id===wizId);
-      card.querySelector('[data-wizard]').addEventListener('click',()=>openComboWizard(item,count));
+      card.querySelector('[data-wizard]').addEventListener('click',()=>openBundleWizard(item,count));
+      return;
+    }
+    if(strainId){
+      const item = all.find(i=>i.id===strainId);
+      card.querySelector('[data-strain]')?.addEventListener('click',()=>openStrainPicker(item,count));
       return;
     }
     const addId = card.querySelector('[data-add]')?.getAttribute('data-add');
@@ -546,7 +564,7 @@ function renderHistory(){
 document.getElementById('clearHistoryBtn').addEventListener('click',()=>{ if(confirm('Clear order history?')){ state.history=[]; persistHistory(); renderHistory(); }});
 
 /* =========================
-   BUNDLE WIZARD (edible duo)
+   WIZARDS
 ========================= */
 const comboModal=document.getElementById('comboModal');
 const comboTitle=document.getElementById('comboTitle');
@@ -556,12 +574,13 @@ const comboPrev=document.getElementById('comboPrev');
 const comboNext=document.getElementById('comboNext');
 document.getElementById('closeCombo').addEventListener('click',()=>comboModal.close());
 
-function openComboWizard(item, qty){
+/* Edible bundle */
+function openBundleWizard(item, qty){
   const usedTotal = obj => Object.values(obj).reduce((a,b)=>a+b,0);
   const counts = {};
   let confirmMode=false;
 
-  const pool = MENU.edibles;            // only edibles for this bundle
+  const pool = MENU.edibles;
   const needed = item.ediblesIncluded||0;
   const label = 'Edibles';
 
@@ -611,16 +630,64 @@ function openComboWizard(item, qty){
   comboPrev.onclick = ()=>{};
   comboNext.onclick = ()=>{
     if(!confirmMode){ confirmMode=true; renderConfirm(); return; }
-    const fmt = id => (pool.find(x=>x.id===id)||{}).name || id;
-    const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
     addToCart({
       id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
-      pick:counts, meta: `Edibles: ${parts.join(', ')}`
+      pick:counts, meta: `Edibles: ${Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${(pool.find(x=>x.id===id)||{}).name||id} x${c}`).join(', ')}`
     });
     comboModal.close();
   };
 
   renderGrid();
+  comboModal.showModal();
+}
+
+/* Strain picker for flower */
+function openStrainPicker(item, qty){
+  comboTitle.textContent = `Choose Strain — ${item.name}`;
+  comboSteps.innerHTML = `<strong>1. Strain</strong> · 2. Confirm`;
+  let selected = STRAINS[0] || 'House Blend';
+  let confirmMode=false;
+
+  function renderChoices(){
+    comboContent.innerHTML = `
+      <div class="option-list">
+        ${STRAINS.map(s=>`
+          <div class="option-row">
+            <label><input type="radio" name="strain" value="${s}" ${s===selected?'checked':''}/> ${s}</label>
+          </div>`).join('')}
+      </div>`;
+    comboPrev.style.display='none';
+    comboNext.textContent='Next';
+    comboNext.disabled=false;
+
+    comboContent.querySelectorAll('input[name="strain"]').forEach(r=>{
+      r.addEventListener('change',()=>{ selected=r.value; });
+    });
+  }
+
+  function renderConfirm(){
+    comboTitle.textContent = `${item.name}`;
+    comboSteps.innerHTML = `1. Strain · <strong>2. Confirm</strong>`;
+    comboContent.innerHTML = `<div class="summary" style="gap:10px;">
+      <div><strong>Strain:</strong> ${selected}</div>
+      <div class="muted">${currency(item.price)} each</div>
+    </div>`;
+    comboPrev.style.display='none';
+    comboNext.textContent='Add to Cart';
+    comboNext.disabled=false;
+  }
+
+  comboPrev.onclick = ()=>{};
+  comboNext.onclick = ()=>{
+    if(!confirmMode){ confirmMode=true; renderConfirm(); return; }
+    addToCart({
+      id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
+      meta:`Strain: ${selected}`
+    });
+    comboModal.close();
+  };
+
+  renderChoices();
   comboModal.showModal();
 }
 
