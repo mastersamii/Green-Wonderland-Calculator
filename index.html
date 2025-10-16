@@ -3,59 +3,189 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Green Wonderland — Order Calculator</title>
+<title>Green Wonderland Order Calculator</title>
 <style>
   :root{
-    --leaf:#2e7d32; --mint:#86d387; --ink:#1f2430; --muted:#6a7487;
-    --bg:#f6faf6; --panel:#ffffff; --card:#ffffff; --chip:#eef6ee; --border:#e5efe6;
-    --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+    --leaf:#2e7d32; 
+    --mint:#86d387; 
+    --ink:#1f2430; 
+    --muted:#5c6a60;
+
+    --bg:#eef4ef;                 
+    --panel:#f7fbf8;              
+    --card:#ffffff;               
+    --chip:#edf5ee;               
+    --border:#a8b9ad;             
+    --border-strong:#8ba093;      
+    --radius:16px; 
+    --shadow:0 10px 24px rgba(0,0,0,.08);
     --accent:var(--leaf);
-    --bg-dark:#0e1410; --panel-dark:#151c16; --card-dark:#192219; --chip-dark:#1f2a20; --text-dark:#e8f3ea; --border-dark:#2a3b2d;
+
+    /* Dark */
+    --bg-dark:#0e1410; 
+    --panel-dark:#151c16; 
+    --card-dark:#192219; 
+    --chip-dark:#1f2a20; 
+    --text-dark:#e8f3ea; 
+    --border-dark:#2a3b2d;
   }
-  [data-theme="dark"]{ --bg:var(--bg-dark); --panel:var(--panel-dark); --card:var(--card-dark); --chip:var(--chip-dark); --border:var(--border-dark); --ink:var(--text-dark); --muted:#a6b3a8; }
-  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial}
+
+  [data-theme="dark"]{ 
+    --bg:var(--bg-dark); 
+    --panel:var(--panel-dark); 
+    --card:var(--card-dark); 
+    --chip:var(--chip-dark); 
+    --border:var(--border-dark); 
+    --ink:var(--text-dark); 
+    --muted:#a6b3a8; 
+    --border-strong:#384a3e;
+  }
+
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 50% -200px, rgba(46,125,50,.06), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial
+  }
   h1,h2,h3{font-family:Georgia,"Times New Roman",serif;letter-spacing:.2px}
   .container{max-width:1200px;margin:28px auto;padding:0 16px}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+
   .brand{display:flex;align-items:center;gap:12px}
-  .logo{width:48px;height:48px;border-radius:12px;box-shadow:var(--shadow);background:conic-gradient(from 0deg,#fff 0 30%,#86d387 0 55%,#2e7d32 0 100%);display:grid;place-items:center}
+  .logo{
+    width:48px;height:48px;border-radius:12px;
+    box-shadow:var(--shadow);
+    background:conic-gradient(from 0deg,#fff 0 30%,#86d387 0 55%,#2e7d32 0 100%);
+    display:grid;place-items:center
+  }
   .logo span{font-size:22px}
+
   .toolrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--chip);color:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+    background:var(--chip);color:inherit;font-weight:600;cursor:pointer;text-decoration:none;
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
+  }
+  .btn:hover{filter:brightness(0.98)}
+  .btn:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
   .btn.primary{background:linear-gradient(135deg,var(--leaf),#44a049);color:#fff;border:none}
+
   .btn.ghost{background:transparent}
-  .chip{padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem}
-  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px} @media (max-width:980px){.grid{grid-template-columns:1fr}}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)}
-  .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border)}
+  .chip{
+    padding:6px 10px;border-radius:999px;background:var(--chip);
+    border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem
+  }
+
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+  /* >>> Stronger panel/card contrast in light mode */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .panel::after{
+    /* inset outline to make the box edge pop on white */
+    content:"";position:absolute;inset:0;border-radius:calc(var(--radius) - 1px);
+    box-shadow:inset 0 0 0 1px var(--border-strong);
+    pointer-events:none;
+  }
+
+  .panel h2{
+    margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.4)
+  }
   .panel .content{padding:14px}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;
+    box-shadow:0 1px 0 rgba(0,0,0,.03);
+    position:relative;
+  }
+  .card::after{
+    content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;
+    box-shadow:inset 0 0 0 1px var(--border-strong);
+  }
+
   .price{color:var(--accent);font-weight:800}
+
   .qty{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;gap:8px}
-  .qty button{height:36px;border-radius:10px;border:1px solid var(--border);background:var(--chip);font-size:18px;cursor:pointer}
+  .qty button{
+    height:36px;border-radius:10px;border:1px solid var(--border);
+    background:var(--chip);font-size:18px;cursor:pointer
+  }
+  .qty button:hover{filter:brightness(0.98)}
   .qty output{text-align:center}
+
   .muted{color:var(--muted);font-size:.9rem}
-  .order-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:6px}
+
+  .order-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;padding:6px;
+    box-shadow:0 1px 0 rgba(0,0,0,.03);
+    position:relative;
+  }
+  .order-card::after{
+    content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;
+    box-shadow:inset 0 0 0 1px var(--border-strong);
+  }
+
   .cart-item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px;border-bottom:1px dashed var(--border)}
   .cart-item:last-child{border-bottom:none}
+
   .tabs{display:flex;gap:8px;margin-bottom:10px}
   .tabs .btn[aria-selected="true"]{outline:2px solid var(--accent)}
+
   .summary{display:flex;flex-direction:column;gap:12px}
   .summary .row{display:flex;justify-content:space-between;align-items:center}
   .summary .row.total{font-size:1.2rem;font-weight:900}
   .divider{height:1px;background:var(--border);margin:10px 0}
+
   .discount{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-  .kbd{font:700 .9rem ui-monospace,Menlo,Consolas;background:transparent;border:2px solid #3e8e41;color:#3e8e41;border-radius:8px;padding:4px 8px}
-  dialog{width:min(780px,92vw);background:var(--panel);color:inherit;border:1px solid var(--border);border-radius:18px;padding:0}
+  .kbd{
+    font:700 .9rem ui-monospace,Menlo,Consolas;background:transparent;
+    border:2px solid #3e8e41;color:#3e8e41;border-radius:8px;padding:4px 8px
+  }
+
+  dialog{
+    width:min(780px,92vw);background:var(--panel);color:inherit;border:1px solid var(--border);
+    border-radius:18px;padding:0;box-shadow:0 30px 50px rgba(0,0,0,.35)
+  }
   dialog::backdrop{background:rgba(0,0,0,.55)}
   .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
   .modal-body{padding:14px;display:grid;gap:14px}
+
   .selector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-  .select-card{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px;display:flex;flex-direction:column;gap:8px}
+  .select-card{
+    border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px;
+    display:flex;flex-direction:column;gap:8px;position:relative;
+  }
+  .select-card::after{
+    content:"";position:absolute;inset:0;border-radius:11px;pointer-events:none;
+    box-shadow:inset 0 0 0 1px var(--border-strong);
+  }
   .select-title{font-weight:800}
   .select-qty{display:grid;grid-template-columns:32px 1fr 32px;gap:8px;align-items:center}
   .select-qty button{height:32px;border-radius:8px;border:1px solid var(--border);background:var(--chip);cursor:pointer}
+  .select-qty button:hover{filter:brightness(0.98)}
+
+  /* Inputs */
+  select, input[type="radio"]{accent-color:var(--accent)}
+  select{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;
+    box-shadow:inset 0 0 0 1px var(--border-strong);
+  }
 </style>
 </head>
 <body>
@@ -112,7 +242,7 @@
         </div>
 
         <div id="tab-summary" role="tabpanel">
-          <div class="option" style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px 12px;margin-bottom:10px">
+          <div class="option" style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px 12px;margin-bottom:10px;box-shadow:inset 0 0 0 1px var(--border-strong)">
             <div>
               <div><strong>Fulfillment</strong></div>
               <div class="muted">City $50 · Sandy $100 · Paleto $150</div>
