@@ -3,21 +3,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Green Wonderland — Order Calculator</title>
+<title>Green Wonderland Order Calculator</title>
 <style>
   :root{
-    /* Light theme — boosted contrast */
     --leaf:#2e7d32; 
     --mint:#86d387; 
     --ink:#1f2430; 
     --muted:#5c6a60;
 
-    --bg:#eef4ef;                 /* was #f6faf6 */
-    --panel:#f7fbf8;              /* was #ffffff */
-    --card:#ffffff;               /* still white, but outlined + shadow */
-    --chip:#edf5ee;               /* was #eef6ee */
-    --border:#a8b9ad;             /* was #e5efe6 -> much darker */
-    --border-strong:#8ba093;      /* for inset lines */
+    --bg:#eef4ef;
+    --panel:#f7fbf8;
+    --card:#ffffff;
+    --chip:#edf5ee;
+    --border:#a8b9ad;
+    --border-strong:#8ba093;
     --radius:16px; 
     --shadow:0 10px 24px rgba(0,0,0,.08);
     --accent:var(--leaf);
@@ -75,17 +74,12 @@
   .btn:hover{filter:brightness(0.98)}
   .btn:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
   .btn.primary{background:linear-gradient(135deg,var(--leaf),#44a049);color:#fff;border:none}
-
   .btn.ghost{background:transparent}
-  .chip{
-    padding:6px 10px;border-radius:999px;background:var(--chip);
-    border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem
-  }
+  .chip{padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem}
 
   .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
   @media (max-width:980px){.grid{grid-template-columns:1fr}}
 
-  /* >>> Stronger panel/card contrast in light mode */
   .panel{
     background:var(--panel);
     border:1px solid var(--border);
@@ -94,15 +88,11 @@
     position:relative;
   }
   .panel::after{
-    /* inset outline to make the box edge pop on white */
     content:"";position:absolute;inset:0;border-radius:calc(var(--radius) - 1px);
     box-shadow:inset 0 0 0 1px var(--border-strong);
     pointer-events:none;
   }
-
-  .panel h2{
-    margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.4)
-  }
+  .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.4)}
   .panel .content{padding:14px}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 
@@ -113,21 +103,13 @@
     box-shadow:0 1px 0 rgba(0,0,0,.03);
     position:relative;
   }
-  .card::after{
-    content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;
-    box-shadow:inset 0 0 0 1px var(--border-strong);
-  }
-
+  .card::after{content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 1px var(--border-strong)}
   .price{color:var(--accent);font-weight:800}
 
   .qty{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;gap:8px}
-  .qty button{
-    height:36px;border-radius:10px;border:1px solid var(--border);
-    background:var(--chip);font-size:18px;cursor:pointer
-  }
+  .qty button{height:36px;border-radius:10px;border:1px solid var(--border);background:var(--chip);font-size:18px;cursor:pointer}
   .qty button:hover{filter:brightness(0.98)}
   .qty output{text-align:center}
-
   .muted{color:var(--muted);font-size:.9rem}
 
   .order-card{
@@ -137,11 +119,7 @@
     box-shadow:0 1px 0 rgba(0,0,0,.03);
     position:relative;
   }
-  .order-card::after{
-    content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;
-    box-shadow:inset 0 0 0 1px var(--border-strong);
-  }
-
+  .order-card::after{content:"";position:absolute;inset:0;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 1px var(--border-strong)}
   .cart-item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px;border-bottom:1px dashed var(--border)}
   .cart-item:last-child{border-bottom:none}
 
@@ -154,10 +132,7 @@
   .divider{height:1px;background:var(--border);margin:10px 0}
 
   .discount{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-  .kbd{
-    font:700 .9rem ui-monospace,Menlo,Consolas;background:transparent;
-    border:2px solid #3e8e41;color:#3e8e41;border-radius:8px;padding:4px 8px
-  }
+  .kbd{font:700 .9rem ui-monospace,Menlo,Consolas;background:transparent;border:2px solid #3e8e41;color:#3e8e41;border-radius:8px;padding:4px 8px}
 
   dialog{
     width:min(780px,92vw);background:var(--panel);color:inherit;border:1px solid var(--border);
@@ -168,25 +143,18 @@
   .modal-body{padding:14px;display:grid;gap:14px}
 
   .selector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-  .select-card{
-    border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px;
-    display:flex;flex-direction:column;gap:8px;position:relative;
-  }
-  .select-card::after{
-    content:"";position:absolute;inset:0;border-radius:11px;pointer-events:none;
-    box-shadow:inset 0 0 0 1px var(--border-strong);
-  }
+  .select-card{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px;display:flex;flex-direction:column;gap:8px;position:relative}
+  .select-card::after{content:"";position:absolute;inset:0;border-radius:11px;pointer-events:none;box-shadow:inset 0 0 0 1px var(--border-strong)}
   .select-title{font-weight:800}
   .select-qty{display:grid;grid-template-columns:32px 1fr 32px;gap:8px;align-items:center}
   .select-qty button{height:32px;border-radius:8px;border:1px solid var(--border);background:var(--chip);cursor:pointer}
   .select-qty button:hover{filter:brightness(0.98)}
 
-  /* Inputs */
   select, input[type="radio"]{accent-color:var(--accent)}
-  select{
-    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;
-    box-shadow:inset 0 0 0 1px var(--border-strong);
-  }
+  select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;box-shadow:inset 0 0 0 1px var(--border-strong)}
+  .rowline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);cursor:pointer}
+  .pill[aria-pressed="true"]{outline:2px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -195,7 +163,7 @@
     <div class="brand">
       <div class="logo"><span>🌿</span></div>
       <div>
-        <h1 style="margin:0">Green Wonderland — Order Calculator</h1>
+        <h1 style="margin:0">Green Wonderland Order Calculator</h1>
         <div class="muted">Build carts, pick bundles, apply discounts, and see exact totals + ingredients.</div>
       </div>
     </div>
@@ -212,7 +180,7 @@
     <section class="panel">
       <h2>Menu</h2>
       <div class="content">
-        <h3 style="margin:0 0 6px">Flower & Vapes</h3>
+        <h3 style="margin:0 0 6px">Vapes & Flower</h3>
         <div class="cards" id="vapes"></div>
 
         <div class="divider"></div>
@@ -328,12 +296,49 @@
 /* =========================
    CONFIG / DATA
 ========================= */
+
+/* ---- Flower catalog & prices ----
+   Edit these anytime (adds/changes reflect in the picker). */
+const FLOWER_SIZES = ['1g','3.5g','7g','14g','28g'];
+
+/* Basic keeps 1oz = $100 (you asked to keep that).
+   Smaller sizes scale from that baseline. */
+const FLOWER_PRICES = {
+  basic : { '1g': 4,  '3.5g': 12, '7g': 25,  '14g': 50,  '28g': 100 },
+  premium: { '1g': 20, '3.5g': 55, '7g': 100, '14g': 190, '28g': 360 },
+  exotic : { '1g': 25, '3.5g': 70, '7g': 130, '14g': 250, '28g': 480 }
+};
+
+/* Strain lists by tier (Gorilla Glue included) */
+const STRAINS = {
+  premium: ['Gorilla Glue','Wedding Cake','Blue Dream'],
+  exotic : ['Runtz','Gelato 41','Zkittlez']
+};
+
+/* Helper to get the *lowest* available price for display on the card */
+function minFlowerPrice(){
+  const vals = Object.values(FLOWER_PRICES.basic);
+  return Math.min(...vals);
+}
+
 const MENU = {
   vapes: [
-    { id:'thc-vape', name:'THC Vape', price:300, type:'vape' },     // recipe driven
-    { id:'geek-bar', name:'Geek Bar', price:400, type:'vape' },     // from image
-    { id:'penjamin', name:'Penjamin', price:125, type:'vape' },     // from image
-    { id:'bong',     name:'Bong',     price:420, type:'accessory' } // from image
+    /* Geek Bars (sell) */
+    { id:'geek-plain',  name:'Geek Bar (Plain)',    price:800,  type:'vape' },
+    { id:'geek-flavor', name:'Geek Bar (Flavored)', price:1000, type:'vape' },
+    { id:'geek-thc',    name:'Geek Bar (THC)',      price:1100, type:'vape' },
+
+    /* Refills */
+    { id:'refill-plain',  name:'Refill: Geek Bar (Plain)',    price:400, type:'service' },
+    { id:'refill-flavor', name:'Refill: Geek Bar (Flavored)', price:400, type:'service' },
+    { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' },
+
+    /* Flower (variable price via picker) */
+    { id:'flower', name:`Weed Flower (from $${minFlowerPrice()})`, price:0, type:'flower', variable:true },
+
+    /* Other items */
+    { id:'penjamin', name:'Penjamin', price:125, type:'vape' },
+    { id:'bong',     name:'Bong',     price:420, type:'accessory' }
   ],
   edibles: [
     { id:'brownie-6', name:'6× Brownies', price:120, type:'edible' },
@@ -353,23 +358,21 @@ const MENU = {
     { id:'green-rolls', name:'Green Rolls', price:50,  type:'extra' },
     { id:'almond-joy', name:'Almond Joy',   price:10,  type:'extra' },
     { id:'rice-kris',  name:'Rice Krispies',price:12,  type:'extra' },
-    { id:'cocoa',      name:'Cocoa Powder', price:10,  type:'extra' }, // ingredient too
-    { id:'jolly',      name:'Jolly Ranchers', price:10, type:'extra' },// ingredient too
-    { id:'weed-seeds', name:'Weed Seeds',   price:10,  type:'extra' },
-    // inventory items sold or just tracked as ingredients:
-    { id:'pack-weed',  name:'Packaged Weed', price:300, type:'extra' },
-    { id:'plain-vape', name:'Plain Vape',   price:80,  type:'extra' },
-    { id:'weed-1q',    name:'Weed 1q',      price:100, type:'extra' }
+
+    /* Ingredients / inventory you sell or just track */
+    { id:'cocoa',      name:'Cocoa Powder',    price:10,  type:'extra' },
+    { id:'jolly',      name:'Jolly Ranchers',  price:10,  type:'extra' },
+    { id:'weed-seeds', name:'Weed Seeds',      price:10,  type:'extra' },
+    { id:'pack-weed',  name:'Packaged Weed',   price:300, type:'extra' },
+    { id:'plain-vape', name:'Plain Vape',      price:80,  type:'extra' },
+    { id:'weed-1q',    name:'Weed 1q',         price:100, type:'extra' }
   ]
 };
 
-// RECIPE MAP (ingredients consumed)
+/* Crafting recipes (edibles only; vapes/flower are fixed/variable items) */
 const RECIPE_MAP = {
-  // Edibles
   'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
-  'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 },
-  // Vape
-  'thc-vape' : { 'Plain Vape':1, 'Weed 1q':1 }
+  'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 }
 };
 
 const currency = n => '$'+n.toFixed(2);
@@ -396,19 +399,22 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
    RENDER: CARDS
 ========================= */
 function cardHTML(item){
-  const needsWizard = (item.ediblesIncluded||0)>0 || (item.vapesIncluded||0)>0;
+  const needsWizard = (item.ediblesIncluded||0)>0 || (item.vapesIncluded||0)>0 || item.id==='flower';
+  const priceText = item.id==='flower' ? '' : `<span class="price">${currency(item.price)}</span>`;
   return `
   <article class="card">
     <h3 style="margin:0">${item.name}</h3>
     <div class="toolrow" style="justify-content:space-between">
-      <span class="price">${currency(item.price)}</span>
+      ${priceText}
       <div class="qty">
         <button aria-label="dec">−</button>
         <output>1</output>
         <button aria-label="inc">+</button>
       </div>
     </div>
-    ${needsWizard?`<button class="btn" data-wizard="${item.id}">Choose &amp; Add</button>`:`<button class="btn" data-add="${item.id}">Add</button>`}
+    ${needsWizard
+      ? `<button class="btn" ${item.id==='flower' ? 'data-flower="flower"' : `data-wizard="${item.id}"`}>Choose &amp; Add</button>`
+      : `<button class="btn" data-add="${item.id}">Add</button>`}
     ${item.description?`<div class="muted">${item.description}</div>`:''}
   </article>`;  
 }
@@ -427,12 +433,20 @@ function renderCards(){
     card.querySelector('button[aria-label="dec"]')?.addEventListener('click',()=>{ count=Math.max(1,count-1); out.value=count; });
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
 
+    // Flower picker
+    const flowerBtn = card.querySelector('[data-flower]');
+    if(flowerBtn){
+      flowerBtn.addEventListener('click',()=>openFlowerWizard(count));
+      return;
+    }
+
     const wizId = card.querySelector('[data-wizard]')?.getAttribute('data-wizard');
     if(wizId){
       const item = all.find(i=>i.id===wizId);
       card.querySelector('[data-wizard]').addEventListener('click',()=>openComboWizard(item,count));
       return;
     }
+
     const addId = card.querySelector('[data-add]')?.getAttribute('data-add');
     if(addId){
       const item = all.find(i=>i.id===addId);
@@ -552,7 +566,7 @@ function renderHistory(){
 document.getElementById('clearHistoryBtn').addEventListener('click',()=>{ if(confirm('Clear order history?')){ state.history=[]; persistHistory(); renderHistory(); }});
 
 /* =========================
-   SELECTOR WIZARD with Half/Max
+   VAPE/EDIBLE WIZARD (unchanged)
 ========================= */
 const comboModal=document.getElementById('comboModal');
 const comboTitle=document.getElementById('comboTitle');
@@ -567,7 +581,6 @@ function openComboWizard(item, qty){
   const poolEdibles = MENU.edibles;
   const poolVapes   = MENU.vapes;
 
-  // Which mode
   const edNeed = item.ediblesIncluded||0;
   const vpNeed = item.vapesIncluded||0;
   const counts = {};
@@ -594,15 +607,12 @@ function openComboWizard(item, qty){
           </div>`).join('')}
       </div>`;
 
-    // +/- handlers
     comboContent.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{
       const id=b.getAttribute('data-plus'); if(usedTotal(counts)<needed){ counts[id]=(counts[id]||0)+1; renderGrid(pool,needed,label); }
     }));
     comboContent.querySelectorAll('[data-minus]').forEach(b=>b.addEventListener('click',()=>{
       const id=b.getAttribute('data-minus'); counts[id]=Math.max(0,(counts[id]||0)-1); renderGrid(pool,needed,label);
     }));
-
-    // Half / Max (per-item)
     comboContent.querySelectorAll('[data-half]').forEach(b=>b.addEventListener('click',()=>{
       const id=b.getAttribute('data-half'); const curr=counts[id]||0;
       const usedWithout = usedTotal(counts) - curr;
@@ -656,19 +666,113 @@ function openComboWizard(item, qty){
 }
 
 /* =========================
+   FLOWER PICKER (tier + strain + size)
+========================= */
+function openFlowerWizard(qty){
+  comboTitle.textContent = 'Weed Flower';
+  comboSteps.innerHTML = '<strong>1. Choose</strong> · 2. Confirm';
+
+  // Build selects
+  const tierOptions = [
+    {id:'basic', label:'Basic (Non-strain)'},
+    {id:'premium', label:'Premium'},
+    {id:'exotic', label:'Exotic'}
+  ];
+
+  let currentTier='basic';
+  let currentStrain='Basic (Non-strain)';
+  let currentSize='3.5g';
+
+  function priceFor(tier,size){
+    const map = FLOWER_PRICES[tier]||FLOWER_PRICES.basic;
+    return map[size];
+  }
+
+  function render(){
+    const strains = currentTier==='basic' ? ['Basic (Non-strain)'] : (STRAINS[currentTier]||[]);
+    if(!strains.includes(currentStrain)) currentStrain = strains[0];
+
+    const sizePills = FLOWER_SIZES.map(s=>{
+      const pressed = s===currentSize ? 'aria-pressed="true"' : 'aria-pressed="false"';
+      return `<button class="pill" data-size="${s}" ${pressed}>${s}</button>`;
+    }).join('');
+
+    const price = priceFor(currentTier,currentSize) || 0;
+
+    comboContent.innerHTML = `
+      <div class="summary" style="gap:10px">
+        <div class="rowline">
+          <label><strong>Tier</strong></label>
+          <select id="flower-tier">
+            ${tierOptions.map(t=>`<option value="${t.id}" ${t.id===currentTier?'selected':''}>${t.label}</option>`).join('')}
+          </select>
+          <label><strong>Strain</strong></label>
+          <select id="flower-strain" ${currentTier==='basic'?'disabled':''}>
+            ${strains.map(s=>`<option value="${s}" ${s===currentStrain?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="rowline">
+          <label><strong>Size</strong></label>
+          ${sizePills}
+        </div>
+
+        <div class="rowline">
+          <div class="muted">Price</div>
+          <div><strong style="font-size:1.1rem">${currency(price)}</strong> <span class="muted">per unit</span></div>
+        </div>
+      </div>
+    `;
+
+    comboContent.querySelector('#flower-tier').addEventListener('change',e=>{
+      currentTier=e.target.value; render();
+    });
+    const sEl = comboContent.querySelector('#flower-strain');
+    if(sEl){
+      sEl.addEventListener('change',e=>{ currentStrain=e.target.value; });
+    }
+    comboContent.querySelectorAll('[data-size]').forEach(b=>{
+      b.addEventListener('click',()=>{
+        currentSize=b.getAttribute('data-size'); render();
+      });
+    });
+
+    comboPrev.style.display='none';
+    comboNext.textContent='Add to Cart';
+    comboNext.disabled = priceFor(currentTier,currentSize)==null;
+  }
+
+  comboNext.onclick = ()=>{
+    const unitPrice = priceFor(currentTier,currentSize)||0;
+    const labelTier = currentTier==='basic' ? 'Basic' : (currentTier[0].toUpperCase()+currentTier.slice(1));
+    const strainLabel = currentTier==='basic' ? 'Basic (Non-strain)' : currentStrain;
+    addToCart({
+      id:`flower-${currentTier}-${currentSize}`,
+      name:`Flower: ${strainLabel} • ${currentSize}`,
+      unitPrice: unitPrice,
+      qty: qty||1,
+      type:'flower',
+      meta: `${labelTier}`
+    });
+    comboModal.close();
+  };
+
+  render();
+  comboModal.showModal();
+}
+
+/* =========================
    INGREDIENTS
 ========================= */
 function aggregateIngredients(){
   const add=(m,o)=>{ o[m]=(o[m]||0)+1; };
   const tally={};
   state.cart.forEach(line=>{
-    // recipe for sold item itself
     if(RECIPE_MAP[line.id]){
       for(const [ing,count] of Object.entries(RECIPE_MAP[line.id])){
         for(let i=0;i<count*line.qty;i++) add(ing,tally);
       }
     }
-    // recipe for bundle selections
     if(line.pick){
       for(const [id,c] of Object.entries(line.pick)){
         if(RECIPE_MAP[id]){
