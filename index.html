@@ -21,13 +21,13 @@
     --shadow:0 10px 24px rgba(0,0,0,.08);
     --accent:var(--leaf);
 
-    /* Dark */
-    --bg-dark:#0e1410; 
-    --panel-dark:#151c16; 
-    --card-dark:#192219; 
-    --chip-dark:#1f2a20; 
-    --text-dark:#e8f3ea; 
-    --border-dark:#2a3b2d;
+    --bg-dark:#101010; 
+    --panel-dark:#1e1e1e; 
+    --card-dark:#242424; 
+    --chip-dark:#2a2a2a; 
+    --text-dark:#e6e6e6; 
+    --border-dark:#3a3a3a;
+    --border-strong-dark:#4a4a4a;
   }
 
   [data-theme="dark"]{ 
@@ -37,8 +37,8 @@
     --chip:var(--chip-dark); 
     --border:var(--border-dark); 
     --ink:var(--text-dark); 
-    --muted:#a6b3a8; 
-    --border-strong:#384a3e;
+    --muted:#b7b7b7; 
+    --border-strong:var(--border-strong-dark);
   }
 
   *{box-sizing:border-box}
@@ -92,7 +92,7 @@
     box-shadow:inset 0 0 0 1px var(--border-strong);
     pointer-events:none;
   }
-  .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.4)}
+  .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.04)}
   .panel .content{padding:14px}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 
@@ -152,9 +152,6 @@
 
   select, input[type="radio"]{accent-color:var(--accent)}
   select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;box-shadow:inset 0 0 0 1px var(--border-strong)}
-  .rowline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);cursor:pointer}
-  .pill[aria-pressed="true"]{outline:2px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -180,8 +177,18 @@
     <section class="panel">
       <h2>Menu</h2>
       <div class="content">
-        <h3 style="margin:0 0 6px">Vapes & Flower</h3>
+        <h3 style="margin:0 0 6px">Geek Bars & Vapes</h3>
         <div class="cards" id="vapes"></div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 6px">Refills</h3>
+        <div class="cards" id="refills"></div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 6px">Flower (Quantity Based)</h3>
+        <div class="cards" id="flower"></div>
 
         <div class="divider"></div>
 
@@ -296,70 +303,52 @@
 /* =========================
    CONFIG / DATA
 ========================= */
-
-/* ---- Flower catalog & prices ----
-   Edit these anytime (adds/changes reflect in the picker). */
-const FLOWER_SIZES = ['1g','3.5g','7g','14g','28g'];
-
-/* Basic keeps 1oz = $100 (you asked to keep that).
-   Smaller sizes scale from that baseline. */
-const FLOWER_PRICES = {
-  basic : { '1g': 4,  '3.5g': 12, '7g': 25,  '14g': 50,  '28g': 100 },
-  premium: { '1g': 20, '3.5g': 55, '7g': 100, '14g': 190, '28g': 360 },
-  exotic : { '1g': 25, '3.5g': 70, '7g': 130, '14g': 250, '28g': 480 }
-};
-
-/* Strain lists by tier (Gorilla Glue included) */
-const STRAINS = {
-  premium: ['Gorilla Glue','Wedding Cake','Blue Dream'],
-  exotic : ['Runtz','Gelato 41','Zkittlez']
-};
-
-/* Helper to get the *lowest* available price for display on the card */
-function minFlowerPrice(){
-  const vals = Object.values(FLOWER_PRICES.basic);
-  return Math.min(...vals);
-}
-
 const MENU = {
   vapes: [
-    /* Geek Bars (sell) */
     { id:'geek-plain',  name:'Geek Bar (Plain)',    price:800,  type:'vape' },
     { id:'geek-flavor', name:'Geek Bar (Flavored)', price:1000, type:'vape' },
     { id:'geek-thc',    name:'Geek Bar (THC)',      price:1100, type:'vape' },
 
-    /* Refills */
+    { id:'penjamin', name:'Penjamin', price:500, type:'vape' },
+    { id:'bong',     name:'Bong',     price:700, type:'accessory' }
+  ],
+
+  refills: [
     { id:'refill-plain',  name:'Refill: Geek Bar (Plain)',    price:400, type:'service' },
     { id:'refill-flavor', name:'Refill: Geek Bar (Flavored)', price:400, type:'service' },
-    { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' },
-
-    /* Flower (variable price via picker) */
-    { id:'flower', name:`Weed Flower (from $${minFlowerPrice()})`, price:0, type:'flower', variable:true },
-
-    /* Other items */
-    { id:'penjamin', name:'Penjamin', price:125, type:'vape' },
-    { id:'bong',     name:'Bong',     price:420, type:'accessory' }
+    { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
+
+  /* Quantity-based Flower (not weight menus) */
+  flower: [
+    { id:'flower-basic-joint',    name:'Basic Joint',     price:100, type:'flower' },
+    { id:'flower-basic-quarter',  name:'Basic Quarter',   price:100, type:'flower' },
+    { id:'flower-premium-joint',  name:'Premium Joint',   price:150, type:'flower' },
+    { id:'flower-exotic-joint',   name:'Exotic Joint',    price:200, type:'flower' },
+    { id:'flower-premium-quarter',name:'Premium Quarter', price:150, type:'flower' },
+    { id:'flower-exotic-quarter', name:'Exotic Quarter',  price:200, type:'flower' }
+  ],
+
   edibles: [
-    { id:'brownie-6', name:'6× Brownies', price:120, type:'edible' },
-    { id:'gummy-3',   name:'3× Gummies',  price:60,  type:'edible' },
+    { id:'brownie-6', name:'6× Brownies', price:250, type:'edible' },
+    { id:'gummy-3',   name:'3× Gummies',  price:250, type:'edible' },
   ],
-  bundles: [
-    { id:'bd-edibles', name:'Edible Variety Pack (pick 10)', price:200, type:'bundle', ediblesIncluded:10,
-      description:'Mix any Brownie-6 and Gummy-3 packs. Half/Max buttons per item make it quick.' },
-    { id:'bd-vapes',   name:'Vape Bundle (pick 3)', price:750, type:'bundle', vapesIncluded:3,
-      description:'Pick any 3 vapes. Great for groups.' }
-  ],
-  extras: [
-    { id:'paper-bag', name:'Paper Bag',     price:1,   type:'extra' },
-    { id:'lighter',   name:'Lighter',       price:5,   type:'extra' },
-    { id:'wallet',    name:'Wallet',        price:260, type:'extra' },
-    { id:'lunch-box', name:'Lunch Box',     price:285, type:'extra' },
-    { id:'green-rolls', name:'Green Rolls', price:50,  type:'extra' },
-    { id:'almond-joy', name:'Almond Joy',   price:10,  type:'extra' },
-    { id:'rice-kris',  name:'Rice Krispies',price:12,  type:'extra' },
 
-    /* Ingredients / inventory you sell or just track */
+  /* Bundles adjusted to new pricing */
+  bundles: [
+    { id:'bd-edibles', name:'Edible Duo (pick 2)', price:500, type:'bundle', ediblesIncluded:2,
+      description:'Choose any 2 edible packs.' }
+  ],
+
+  extras: [
+    { id:'lighter',   name:'Lighter',        price:5,   type:'extra' },
+    { id:'wallet',    name:'Wallet',         price:260, type:'extra' },
+    { id:'lunch-box', name:'Lunch Box',      price:285, type:'extra' },
+    { id:'green-rolls', name:'Green Rolls',  price:50,  type:'extra' },
+    { id:'almond-joy', name:'Almond Joy',    price:10,  type:'extra' },
+    { id:'rice-kris',  name:'Rice Krispies', price:12,  type:'extra' },
+
+    /* Ingredients / inventory you might still sell or just track */
     { id:'cocoa',      name:'Cocoa Powder',    price:10,  type:'extra' },
     { id:'jolly',      name:'Jolly Ranchers',  price:10,  type:'extra' },
     { id:'weed-seeds', name:'Weed Seeds',      price:10,  type:'extra' },
@@ -369,7 +358,7 @@ const MENU = {
   ]
 };
 
-/* Crafting recipes (edibles only; vapes/flower are fixed/variable items) */
+/* RECIPE MAP for edibles (for ingredients tab) */
 const RECIPE_MAP = {
   'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
   'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 }
@@ -399,22 +388,19 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
    RENDER: CARDS
 ========================= */
 function cardHTML(item){
-  const needsWizard = (item.ediblesIncluded||0)>0 || (item.vapesIncluded||0)>0 || item.id==='flower';
-  const priceText = item.id==='flower' ? '' : `<span class="price">${currency(item.price)}</span>`;
+  const needsWizard = (item.ediblesIncluded||0)>0;
   return `
   <article class="card">
     <h3 style="margin:0">${item.name}</h3>
     <div class="toolrow" style="justify-content:space-between">
-      ${priceText}
+      <span class="price">${currency(item.price)}</span>
       <div class="qty">
         <button aria-label="dec">−</button>
         <output>1</output>
         <button aria-label="inc">+</button>
       </div>
     </div>
-    ${needsWizard
-      ? `<button class="btn" ${item.id==='flower' ? 'data-flower="flower"' : `data-wizard="${item.id}"`}>Choose &amp; Add</button>`
-      : `<button class="btn" data-add="${item.id}">Add</button>`}
+    ${needsWizard?`<button class="btn" data-wizard="${item.id}">Choose &amp; Add</button>`:`<button class="btn" data-add="${item.id}">Add</button>`}
     ${item.description?`<div class="muted">${item.description}</div>`:''}
   </article>`;  
 }
@@ -422,23 +408,18 @@ function cardHTML(item){
 function renderCards(){
   const $ = sel => document.querySelector(sel);
   $('#vapes').innerHTML   = MENU.vapes.map(cardHTML).join('');
+  $('#refills').innerHTML = MENU.refills.map(cardHTML).join('');
+  $('#flower').innerHTML  = MENU.flower.map(cardHTML).join('');
   $('#edibles').innerHTML = MENU.edibles.map(cardHTML).join('');
   $('#bundles').innerHTML = MENU.bundles.map(cardHTML).join('');
   $('#extras').innerHTML  = MENU.extras.map(cardHTML).join('');
 
-  const all = [...MENU.vapes, ...MENU.edibles, ...MENU.bundles, ...MENU.extras];
+  const all = [...MENU.vapes, ...MENU.refills, ...MENU.flower, ...MENU.edibles, ...MENU.bundles, ...MENU.extras];
 
   document.querySelectorAll('.cards .card').forEach(card=>{
     let count=1; const out=card.querySelector('output');
     card.querySelector('button[aria-label="dec"]')?.addEventListener('click',()=>{ count=Math.max(1,count-1); out.value=count; });
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
-
-    // Flower picker
-    const flowerBtn = card.querySelector('[data-flower]');
-    if(flowerBtn){
-      flowerBtn.addEventListener('click',()=>openFlowerWizard(count));
-      return;
-    }
 
     const wizId = card.querySelector('[data-wizard]')?.getAttribute('data-wizard');
     if(wizId){
@@ -446,7 +427,6 @@ function renderCards(){
       card.querySelector('[data-wizard]').addEventListener('click',()=>openComboWizard(item,count));
       return;
     }
-
     const addId = card.querySelector('[data-add]')?.getAttribute('data-add');
     if(addId){
       const item = all.find(i=>i.id===addId);
@@ -566,7 +546,7 @@ function renderHistory(){
 document.getElementById('clearHistoryBtn').addEventListener('click',()=>{ if(confirm('Clear order history?')){ state.history=[]; persistHistory(); renderHistory(); }});
 
 /* =========================
-   VAPE/EDIBLE WIZARD (unchanged)
+   BUNDLE WIZARD (edible duo)
 ========================= */
 const comboModal=document.getElementById('comboModal');
 const comboTitle=document.getElementById('comboTitle');
@@ -578,15 +558,14 @@ document.getElementById('closeCombo').addEventListener('click',()=>comboModal.cl
 
 function openComboWizard(item, qty){
   const usedTotal = obj => Object.values(obj).reduce((a,b)=>a+b,0);
-  const poolEdibles = MENU.edibles;
-  const poolVapes   = MENU.vapes;
-
-  const edNeed = item.ediblesIncluded||0;
-  const vpNeed = item.vapesIncluded||0;
   const counts = {};
   let confirmMode=false;
 
-  function renderGrid(pool, needed, label){
+  const pool = MENU.edibles;            // only edibles for this bundle
+  const needed = item.ediblesIncluded||0;
+  const label = 'Edibles';
+
+  function renderGrid(){
     const used=usedTotal(counts), remaining=needed-used;
     comboTitle.textContent = `${label}: pick ${needed} (remaining ${Math.max(0,remaining)})`;
     comboSteps.innerHTML = confirmMode ? `1. ${label} · <strong>2. Confirm</strong>` : `<strong>1. ${label}</strong> · 2. Confirm`;
@@ -600,30 +579,14 @@ function openComboWizard(item, qty){
               <output data-out="${p.id}">${counts[p.id]||0}</output>
               <button data-plus="${p.id}">+</button>
             </div>
-            <div class="toolrow" style="gap:6px;margin-top:6px">
-              <button class="btn" data-half="${p.id}">Half</button>
-              <button class="btn" data-max="${p.id}">Max</button>
-            </div>
           </div>`).join('')}
       </div>`;
 
     comboContent.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{
-      const id=b.getAttribute('data-plus'); if(usedTotal(counts)<needed){ counts[id]=(counts[id]||0)+1; renderGrid(pool,needed,label); }
+      const id=b.getAttribute('data-plus'); if(usedTotal(counts)<needed){ counts[id]=(counts[id]||0)+1; renderGrid(); }
     }));
     comboContent.querySelectorAll('[data-minus]').forEach(b=>b.addEventListener('click',()=>{
-      const id=b.getAttribute('data-minus'); counts[id]=Math.max(0,(counts[id]||0)-1); renderGrid(pool,needed,label);
-    }));
-    comboContent.querySelectorAll('[data-half]').forEach(b=>b.addEventListener('click',()=>{
-      const id=b.getAttribute('data-half'); const curr=counts[id]||0;
-      const usedWithout = usedTotal(counts) - curr;
-      const remainingForThis = Math.max(0, needed - usedWithout);
-      const target = Math.min(Math.ceil(needed/2), remainingForThis);
-      counts[id]=target; renderGrid(pool,needed,label);
-    }));
-    comboContent.querySelectorAll('[data-max]').forEach(b=>b.addEventListener('click',()=>{
-      const id=b.getAttribute('data-max'); const curr=counts[id]||0;
-      const usedWithout = usedTotal(counts) - curr;
-      counts[id] = Math.max(0, needed - usedWithout); renderGrid(pool,needed,label);
+      const id=b.getAttribute('data-minus'); counts[id]=Math.max(0,(counts[id]||0)-1); renderGrid();
     }));
 
     comboPrev.style.display='none';
@@ -631,9 +594,9 @@ function openComboWizard(item, qty){
     comboNext.disabled = remaining>0;
   }
 
-  function renderConfirm(needed, label){
+  function renderConfirm(){
     comboTitle.textContent=item.name;
-    const fmt = id => (poolEdibles.concat(poolVapes).find(x=>x.id===id)||{}).name || id;
+    const fmt = id => (pool.find(x=>x.id===id)||{}).name || id;
     const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
     comboSteps.innerHTML = `1. ${label} · <strong>2. Confirm</strong>`;
     comboContent.innerHTML = `<div class="summary" style="gap:10px;">
@@ -645,119 +608,19 @@ function openComboWizard(item, qty){
     comboNext.disabled=false;
   }
 
-  const needed = edNeed>0 ? edNeed : vpNeed;
-  const label = edNeed>0 ? 'Edibles' : 'Vapes';
-  const pool  = edNeed>0 ? poolEdibles : poolVapes;
-
   comboPrev.onclick = ()=>{};
   comboNext.onclick = ()=>{
-    if(!confirmMode){ confirmMode=true; renderConfirm(needed,label); return; }
+    if(!confirmMode){ confirmMode=true; renderConfirm(); return; }
     const fmt = id => (pool.find(x=>x.id===id)||{}).name || id;
     const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
     addToCart({
       id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
-      pick:counts, meta: `${label}: ${parts.join(', ')}`
+      pick:counts, meta: `Edibles: ${parts.join(', ')}`
     });
     comboModal.close();
   };
 
-  renderGrid(pool, needed, label);
-  comboModal.showModal();
-}
-
-/* =========================
-   FLOWER PICKER (tier + strain + size)
-========================= */
-function openFlowerWizard(qty){
-  comboTitle.textContent = 'Weed Flower';
-  comboSteps.innerHTML = '<strong>1. Choose</strong> · 2. Confirm';
-
-  // Build selects
-  const tierOptions = [
-    {id:'basic', label:'Basic (Non-strain)'},
-    {id:'premium', label:'Premium'},
-    {id:'exotic', label:'Exotic'}
-  ];
-
-  let currentTier='basic';
-  let currentStrain='Basic (Non-strain)';
-  let currentSize='3.5g';
-
-  function priceFor(tier,size){
-    const map = FLOWER_PRICES[tier]||FLOWER_PRICES.basic;
-    return map[size];
-  }
-
-  function render(){
-    const strains = currentTier==='basic' ? ['Basic (Non-strain)'] : (STRAINS[currentTier]||[]);
-    if(!strains.includes(currentStrain)) currentStrain = strains[0];
-
-    const sizePills = FLOWER_SIZES.map(s=>{
-      const pressed = s===currentSize ? 'aria-pressed="true"' : 'aria-pressed="false"';
-      return `<button class="pill" data-size="${s}" ${pressed}>${s}</button>`;
-    }).join('');
-
-    const price = priceFor(currentTier,currentSize) || 0;
-
-    comboContent.innerHTML = `
-      <div class="summary" style="gap:10px">
-        <div class="rowline">
-          <label><strong>Tier</strong></label>
-          <select id="flower-tier">
-            ${tierOptions.map(t=>`<option value="${t.id}" ${t.id===currentTier?'selected':''}>${t.label}</option>`).join('')}
-          </select>
-          <label><strong>Strain</strong></label>
-          <select id="flower-strain" ${currentTier==='basic'?'disabled':''}>
-            ${strains.map(s=>`<option value="${s}" ${s===currentStrain?'selected':''}>${s}</option>`).join('')}
-          </select>
-        </div>
-
-        <div class="rowline">
-          <label><strong>Size</strong></label>
-          ${sizePills}
-        </div>
-
-        <div class="rowline">
-          <div class="muted">Price</div>
-          <div><strong style="font-size:1.1rem">${currency(price)}</strong> <span class="muted">per unit</span></div>
-        </div>
-      </div>
-    `;
-
-    comboContent.querySelector('#flower-tier').addEventListener('change',e=>{
-      currentTier=e.target.value; render();
-    });
-    const sEl = comboContent.querySelector('#flower-strain');
-    if(sEl){
-      sEl.addEventListener('change',e=>{ currentStrain=e.target.value; });
-    }
-    comboContent.querySelectorAll('[data-size]').forEach(b=>{
-      b.addEventListener('click',()=>{
-        currentSize=b.getAttribute('data-size'); render();
-      });
-    });
-
-    comboPrev.style.display='none';
-    comboNext.textContent='Add to Cart';
-    comboNext.disabled = priceFor(currentTier,currentSize)==null;
-  }
-
-  comboNext.onclick = ()=>{
-    const unitPrice = priceFor(currentTier,currentSize)||0;
-    const labelTier = currentTier==='basic' ? 'Basic' : (currentTier[0].toUpperCase()+currentTier.slice(1));
-    const strainLabel = currentTier==='basic' ? 'Basic (Non-strain)' : currentStrain;
-    addToCart({
-      id:`flower-${currentTier}-${currentSize}`,
-      name:`Flower: ${strainLabel} • ${currentSize}`,
-      unitPrice: unitPrice,
-      qty: qty||1,
-      type:'flower',
-      meta: `${labelTier}`
-    });
-    comboModal.close();
-  };
-
-  render();
+  renderGrid();
   comboModal.showModal();
 }
 
