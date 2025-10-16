@@ -3,20 +3,21 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Green Wonderland Order Calculator</title>
+<title>Green Wonderland — Order Calculator</title>
 <style>
   :root{
+    /* Light theme — boosted contrast */
     --leaf:#2e7d32; 
     --mint:#86d387; 
     --ink:#1f2430; 
     --muted:#5c6a60;
 
-    --bg:#eef4ef;                 
-    --panel:#f7fbf8;              
-    --card:#ffffff;               
-    --chip:#edf5ee;               
-    --border:#a8b9ad;             
-    --border-strong:#8ba093;      
+    --bg:#eef4ef;                 /* was #f6faf6 */
+    --panel:#f7fbf8;              /* was #ffffff */
+    --card:#ffffff;               /* still white, but outlined + shadow */
+    --chip:#edf5ee;               /* was #eef6ee */
+    --border:#a8b9ad;             /* was #e5efe6 -> much darker */
+    --border-strong:#8ba093;      /* for inset lines */
     --radius:16px; 
     --shadow:0 10px 24px rgba(0,0,0,.08);
     --accent:var(--leaf);
@@ -329,14 +330,10 @@
 ========================= */
 const MENU = {
   vapes: [
-vapes: [
-  { id:'geek-plain',  name:'Geek Bar (Plain)',    price:800,  type:'vape' },
-  { id:'geek-flavor', name:'Geek Bar (Flavored)', price:1000, type:'vape' },
-  { id:'geek-thc',    name:'Geek Bar (THC)',      price:1100, type:'vape' },
-  { id:'penjamin', name:'Penjamin', price:125, type:'vape' },
-  { id:'bong',     name:'Bong',     price:420, type:'accessory' }
-],
-
+    { id:'thc-vape', name:'THC Vape', price:300, type:'vape' },     // recipe driven
+    { id:'geek-bar', name:'Geek Bar', price:400, type:'vape' },     // from image
+    { id:'penjamin', name:'Penjamin', price:125, type:'vape' },     // from image
+    { id:'bong',     name:'Bong',     price:420, type:'accessory' } // from image
   ],
   edibles: [
     { id:'brownie-6', name:'6× Brownies', price:120, type:'edible' },
