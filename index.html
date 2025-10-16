@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Green Wonderland — Order Calculator</title>
+<style>
+  :root{
+    --leaf:#2e7d32; --mint:#86d387; --ink:#1f2430; --muted:#6a7487;
+    --bg:#f6faf6; --panel:#ffffff; --card:#ffffff; --chip:#eef6ee; --border:#e5efe6;
+    --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.08);
+    --accent:var(--leaf);
+    --bg-dark:#0e1410; --panel-dark:#151c16; --card-dark:#192219; --chip-dark:#1f2a20; --text-dark:#e8f3ea; --border-dark:#2a3b2d;
+  }
+  [data-theme="dark"]{ --bg:var(--bg-dark); --panel:var(--panel-dark); --card:var(--card-dark); --chip:var(--chip-dark); --border:var(--border-dark); --ink:var(--text-dark); --muted:#a6b3a8; }
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;letter-spacing:.2px}
+  .container{max-width:1200px;margin:28px auto;padding:0 16px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:48px;height:48px;border-radius:12px;box-shadow:var(--shadow);background:conic-gradient(from 0deg,#fff 0 30%,#86d387 0 55%,#2e7d32 0 100%);display:grid;place-items:center}
+  .logo span{font-size:22px}
+  .toolrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid var(--border);background:var(--chip);color:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+  .btn.primary{background:linear-gradient(135deg,var(--leaf),#44a049);color:#fff;border:none}
+  .btn.ghost{background:transparent}
+  .chip{padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px} @media (max-width:980px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)}
+  .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border)}
+  .panel .content{padding:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .price{color:var(--accent);font-weight:800}
+  .qty{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;gap:8px}
+  .qty button{height:36px;border-radius:10px;border:1px solid var(--border);background:var(--chip);font-size:18px;cursor:pointer}
+  .qty output{text-align:center}
+  .muted{color:var(--muted);font-size:.9rem}
+  .order-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:6px}
+  .cart-item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px;border-bottom:1px dashed var(--border)}
+  .cart-item:last-child{border-bottom:none}
+  .tabs{display:flex;gap:8px;margin-bottom:10px}
+  .tabs .btn[aria-selected="true"]{outline:2px solid var(--accent)}
+  .summary{display:flex;flex-direction:column;gap:12px}
+  .summary .row{display:flex;justify-content:space-between;align-items:center}
+  .summary .row.total{font-size:1.2rem;font-weight:900}
+  .divider{height:1px;background:var(--border);margin:10px 0}
+  .discount{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .kbd{font:700 .9rem ui-monospace,Menlo,Consolas;background:transparent;border:2px solid #3e8e41;color:#3e8e41;border-radius:8px;padding:4px 8px}
+  dialog{width:min(780px,92vw);background:var(--panel);color:inherit;border:1px solid var(--border);border-radius:18px;padding:0}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .modal-body{padding:14px;display:grid;gap:14px}
+  .selector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .select-card{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px;display:flex;flex-direction:column;gap:8px}
+  .select-title{font-weight:800}
+  .select-qty{display:grid;grid-template-columns:32px 1fr 32px;gap:8px;align-items:center}
+  .select-qty button{height:32px;border-radius:8px;border:1px solid var(--border);background:var(--chip);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="logo"><span>🌿</span></div>
+      <div>
+        <h1 style="margin:0">Green Wonderland — Order Calculator</h1>
+        <div class="muted">Build carts, pick bundles, apply discounts, and see exact totals + ingredients.</div>
+      </div>
+    </div>
+    <div class="toolrow">
+      <span class="chip">Autosaves</span>
+      <button class="btn ghost" id="themeBtn" aria-pressed="false">🌙 Dark</button>
+      <button class="btn ghost" id="resetBtn">Clear All</button>
+      <button class="btn primary" id="checkoutBtn">Checkout</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <section class="panel">
+      <h2>Menu</h2>
+      <div class="content">
+        <h3 style="margin:0 0 6px">Flower & Vapes</h3>
+        <div class="cards" id="vapes"></div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 6px">Edibles</h3>
+        <div class="cards" id="edibles"></div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 6px">Bundles</h3>
+        <div class="cards" id="bundles"></div>
+
+        <div class="divider"></div>
+
+        <h3 style="margin:0 0 6px">Accessories & Snacks</h3>
+        <div class="cards" id="extras"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="panel">
+      <h2>Orders</h2>
+      <div class="content">
+        <div class="tabs" role="tablist">
+          <button class="btn" data-tab="summary" aria-selected="true">🧾 Summary</button>
+          <button class="btn" data-tab="ingredients" aria-selected="false">🧺 Ingredients</button>
+          <button class="btn" data-tab="history" aria-selected="false">📜 History</button>
+        </div>
+
+        <div id="tab-summary" role="tabpanel">
+          <div class="option" style="display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:10px 12px;margin-bottom:10px">
+            <div>
+              <div><strong>Fulfillment</strong></div>
+              <div class="muted">City $50 · Sandy $100 · Paleto $150</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <label><input type="radio" name="fulfill" value="pickup"> Pickup</label>
+              <label><input type="radio" name="fulfill" value="delivery"> Delivery</label>
+              <select id="zoneSelect" style="margin-left:6px">
+                <option value="city">City</option>
+                <option value="sandy">Sandy</option>
+                <option value="paleto">Paleto</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="cart" class="order-card">
+            <div class="cart-item muted">Your order is empty. Add an item to get started.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="discount">
+            <label for="discountRange">Discount</label>
+            <div><span id="discountLabel" class="kbd">0%</span></div>
+            <input id="discountRange" type="range" min="0" max="100" step="5" value="0"/>
+          </div>
+
+          <div class="summary" style="margin-top:10px">
+            <div class="row"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
+            <div class="row" id="deliveryRow" style="display:none"><span>Delivery Fee</span><strong id="deliveryFee">$0.00</strong></div>
+            <div class="row"><span>Discount</span><strong id="discount">-$0.00</strong></div>
+            <div class="row"><span>Promotions</span><strong id="promotions">-$0.00</strong></div>
+            <div class="row total"><span>Total</span><strong id="total">$0.00</strong></div>
+            <div class="muted" id="promoNotes"></div>
+          </div>
+
+          <div style="margin-top:10px" class="toolrow">
+            <button class="btn primary" id="checkoutBtn2">Checkout</button>
+            <button class="btn ghost" id="resetBtn2">Clear All</button>
+          </div>
+        </div>
+
+        <div id="tab-ingredients" role="tabpanel" hidden>
+          <div class="muted" style="margin-bottom:6px">Auto-aggregated from your cart.</div>
+          <div id="ingredientList" class="order-card" style="padding:12px">
+            <div class="muted">No ingredients yet. Add items to the cart.</div>
+          </div>
+          <div class="toolrow" style="justify-content:flex-end;margin-top:10px">
+            <button class="btn" id="copyIngBtn">Copy List</button>
+            <button class="btn" id="exportIngBtn">Export CSV</button>
+          </div>
+        </div>
+
+        <div id="tab-history" role="tabpanel" hidden>
+          <div id="historyList" class="summary" style="gap:12px"></div>
+          <div class="toolrow" style="justify-content:flex-end;margin-top:10px">
+            <button class="btn ghost" id="clearHistoryBtn">Clear History</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Selector Modal -->
+<dialog id="comboModal">
+  <div class="modal-header">
+    <strong id="comboTitle">Choose Items</strong>
+    <button class="btn" id="closeCombo">✕</button>
+  </div>
+  <div class="modal-body">
+    <div id="comboSteps" class="muted"></div>
+    <div id="comboContent"></div>
+    <div class="toolrow" style="justify-content:flex-end;margin-top:6px">
+      <button class="btn" id="comboPrev" style="display:none">Back</button>
+      <button class="btn primary" id="comboNext">Next</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* =========================
+   CONFIG / DATA
+========================= */
+const MENU = {
+  vapes: [
+    { id:'thc-vape', name:'THC Vape', price:300, type:'vape' },     // recipe driven
+    { id:'geek-bar', name:'Geek Bar', price:400, type:'vape' },     // from image
+    { id:'penjamin', name:'Penjamin', price:125, type:'vape' },     // from image
+    { id:'bong',     name:'Bong',     price:420, type:'accessory' } // from image
+  ],
+  edibles: [
+    { id:'brownie-6', name:'6× Brownies', price:120, type:'edible' },
+    { id:'gummy-3',   name:'3× Gummies',  price:60,  type:'edible' },
+  ],
+  bundles: [
+    { id:'bd-edibles', name:'Edible Variety Pack (pick 10)', price:200, type:'bundle', ediblesIncluded:10,
+      description:'Mix any Brownie-6 and Gummy-3 packs. Half/Max buttons per item make it quick.' },
+    { id:'bd-vapes',   name:'Vape Bundle (pick 3)', price:750, type:'bundle', vapesIncluded:3,
+      description:'Pick any 3 vapes. Great for groups.' }
+  ],
+  extras: [
+    { id:'paper-bag', name:'Paper Bag',     price:1,   type:'extra' },
+    { id:'lighter',   name:'Lighter',       price:5,   type:'extra' },
+    { id:'wallet',    name:'Wallet',        price:260, type:'extra' },
+    { id:'lunch-box', name:'Lunch Box',     price:285, type:'extra' },
+    { id:'green-rolls', name:'Green Rolls', price:50,  type:'extra' },
+    { id:'almond-joy', name:'Almond Joy',   price:10,  type:'extra' },
+    { id:'rice-kris',  name:'Rice Krispies',price:12,  type:'extra' },
+    { id:'cocoa',      name:'Cocoa Powder', price:10,  type:'extra' }, // ingredient too
+    { id:'jolly',      name:'Jolly Ranchers', price:10, type:'extra' },// ingredient too
+    { id:'weed-seeds', name:'Weed Seeds',   price:10,  type:'extra' },
+    // inventory items sold or just tracked as ingredients:
+    { id:'pack-weed',  name:'Packaged Weed', price:300, type:'extra' },
+    { id:'plain-vape', name:'Plain Vape',   price:80,  type:'extra' },
+    { id:'weed-1q',    name:'Weed 1q',      price:100, type:'extra' }
+  ]
+};
+
+// RECIPE MAP (ingredients consumed)
+const RECIPE_MAP = {
+  // Edibles
+  'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
+  'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 },
+  // Vape
+  'thc-vape' : { 'Plain Vape':1, 'Weed 1q':1 }
+};
+
+const currency = n => '$'+n.toFixed(2);
+
+/* =========================
+   STATE / PERSIST
+========================= */
+const STATE_KEY='gw_state_v1', HIST_KEY='gw_hist_v1';
+const state = { cart:[], discountPct:0, history:[], fulfillment:'pickup', deliveryZone:'city' };
+
+try{
+  const saved = JSON.parse(localStorage.getItem(STATE_KEY)||'{}');
+  const hist  = JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
+  if(Array.isArray(saved.cart)) state.cart=saved.cart;
+  if(typeof saved.discountPct==='number') state.discountPct=saved.discountPct;
+  if(saved.fulfillment) state.fulfillment=saved.fulfillment;
+  if(saved.deliveryZone) state.deliveryZone=saved.deliveryZone;
+  if(Array.isArray(hist)) state.history=hist;
+}catch{}
+const persist=()=>localStorage.setItem(STATE_KEY,JSON.stringify(state));
+const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.history));
+
+/* =========================
+   RENDER: CARDS
+========================= */
+function cardHTML(item){
+  const needsWizard = (item.ediblesIncluded||0)>0 || (item.vapesIncluded||0)>0;
+  return `
+  <article class="card">
+    <h3 style="margin:0">${item.name}</h3>
+    <div class="toolrow" style="justify-content:space-between">
+      <span class="price">${currency(item.price)}</span>
+      <div class="qty">
+        <button aria-label="dec">−</button>
+        <output>1</output>
+        <button aria-label="inc">+</button>
+      </div>
+    </div>
+    ${needsWizard?`<button class="btn" data-wizard="${item.id}">Choose &amp; Add</button>`:`<button class="btn" data-add="${item.id}">Add</button>`}
+    ${item.description?`<div class="muted">${item.description}</div>`:''}
+  </article>`;  
+}
+
+function renderCards(){
+  const $ = sel => document.querySelector(sel);
+  $('#vapes').innerHTML   = MENU.vapes.map(cardHTML).join('');
+  $('#edibles').innerHTML = MENU.edibles.map(cardHTML).join('');
+  $('#bundles').innerHTML = MENU.bundles.map(cardHTML).join('');
+  $('#extras').innerHTML  = MENU.extras.map(cardHTML).join('');
+
+  const all = [...MENU.vapes, ...MENU.edibles, ...MENU.bundles, ...MENU.extras];
+
+  document.querySelectorAll('.cards .card').forEach(card=>{
+    let count=1; const out=card.querySelector('output');
+    card.querySelector('button[aria-label="dec"]')?.addEventListener('click',()=>{ count=Math.max(1,count-1); out.value=count; });
+    card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
+
+    const wizId = card.querySelector('[data-wizard]')?.getAttribute('data-wizard');
+    if(wizId){
+      const item = all.find(i=>i.id===wizId);
+      card.querySelector('[data-wizard]').addEventListener('click',()=>openComboWizard(item,count));
+      return;
+    }
+    const addId = card.querySelector('[data-add]')?.getAttribute('data-add');
+    if(addId){
+      const item = all.find(i=>i.id===addId);
+      card.querySelector('[data-add]')?.addEventListener('click',()=>{
+        addToCart({ id:item.id, name:item.name, unitPrice:item.price, qty:count, type:item.type });
+      });
+    }
+  });
+}
+
+/* =========================
+   CART & TOTALS
+========================= */
+function addToCart(line){
+  const key = `${line.id}|${line.unitPrice}|${line.type}|${line.meta||''}`;
+  const match = state.cart.find(l =>
+    `${l.id}|${l.unitPrice}|${l.type}|${l.meta||''}`===key &&
+    JSON.stringify(l.pick||{})===JSON.stringify(line.pick||{}));
+  if(match) match.qty += line.qty; else state.cart.push(line);
+  persist(); renderCart(); renderTotals(); renderIngredients();
+}
+
+function renderCart(){
+  const cart=document.getElementById('cart');
+  if(!state.cart.length){ cart.innerHTML='<div class="cart-item muted">Your order is empty. Add an item to get started.</div>'; return; }
+  cart.innerHTML = state.cart.map((l,i)=>`
+    <div class="cart-item">
+      <div>
+        <div><strong>${l.name}</strong></div>
+        <div class="muted">${currency(l.unitPrice)} each${l.meta?` • ${l.meta}`:''}</div>
+      </div>
+      <div class="qty">
+        <button data-dec="${i}">−</button>
+        <output>${l.qty}</output>
+        <button data-inc="${i}">+</button>
+      </div>
+      <div><strong>${currency(l.unitPrice*l.qty)}</strong></div>
+    </div>`).join('');
+
+  cart.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.getAttribute('data-inc'); state.cart[i].qty++; persist(); renderCart(); renderTotals(); renderIngredients();
+  }));
+  cart.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.getAttribute('data-dec'); state.cart[i].qty--; if(state.cart[i].qty<=0) state.cart.splice(i,1);
+    persist(); renderCart(); renderTotals(); renderIngredients();
+  }));
+}
+
+const ZONE_FEES={city:50,sandy:100,paleto:150};
+function renderFulfillment(){
+  document.querySelectorAll('input[name="fulfill"]').forEach(r=> r.checked=(r.value===state.fulfillment));
+  const zone=document.getElementById('zoneSelect'); zone.value=state.deliveryZone; zone.disabled = state.fulfillment!=='delivery';
+}
+document.querySelectorAll('input[name="fulfill"]').forEach(r=>r.addEventListener('change',e=>{
+  state.fulfillment=e.target.value; persist(); renderFulfillment(); renderTotals();
+}));
+document.getElementById('zoneSelect').addEventListener('change',e=>{
+  state.deliveryZone=e.target.value; persist(); renderTotals();
+});
+
+function computePromotions(){ return { discount:0, notes:[] }; }
+
+function renderTotals(){
+  const subtotal = state.cart.reduce((s,l)=>s + l.unitPrice*l.qty, 0);
+  const manual = +(subtotal*(state.discountPct/100)).toFixed(2);
+  const promo = computePromotions();
+  const fee = state.fulfillment==='delivery' ? (ZONE_FEES[state.deliveryZone]||0) : 0;
+  const total = subtotal + fee - manual - promo.discount;
+  document.getElementById('subtotal').textContent=currency(subtotal);
+  document.getElementById('discount').textContent='-'+currency(manual);
+  document.getElementById('promotions').textContent='-'+currency(promo.discount);
+  document.getElementById('total').textContent=currency(total);
+  document.getElementById('promoNotes').textContent = promo.notes.join(' • ');
+  const row=document.getElementById('deliveryRow');
+  if(fee>0){ row.style.display='flex'; document.getElementById('deliveryFee').textContent=currency(fee); }
+  else { row.style.display='none'; document.getElementById('deliveryFee').textContent=currency(0); }
+}
+
+const range=document.getElementById('discountRange'), label=document.getElementById('discountLabel');
+function renderDiscount(){ range.value=state.discountPct; label.textContent = `${state.discountPct}%`; }
+range.addEventListener('input',()=>{ state.discountPct=+range.value; persist(); renderTotals(); renderDiscount(); });
+
+/* =========================
+   HISTORY
+========================= */
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  if(!state.history.length){ list.innerHTML='<div class="muted">No past orders yet.</div>'; return; }
+  list.innerHTML = state.history.map(h=>`
+    <article class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><strong>${new Date(h.id).toLocaleString()}</strong><div class="muted">${h.items.length} items • ${h.discountPct}% off</div></div>
+        <div><strong>${currency(h.total)}</strong></div>
+      </div>
+      <details class="muted" style="margin-top:6px">
+        <summary>Items</summary>
+        <ul style="margin:6px 0 0 16px">
+          ${h.items.map(i=>`<li>${i.qty}× ${i.name}${i.meta?` <span class="muted">(${i.meta})</span>`:''} — ${currency(i.lineTotal)}</li>`).join('')}
+        </ul>
+      </details>
+      <div class="toolrow" style="justify-content:flex-end">
+        <button class="btn" data-reorder="${h.id}">Reorder</button>
+        <button class="btn ghost" data-delete="${h.id}">Delete</button>
+      </div>
+    </article>`).join('');
+
+  list.querySelectorAll('[data-reorder]').forEach(b=>b.addEventListener('click',()=>{
+    const id=+b.getAttribute('data-reorder');
+    const h=state.history.find(x=>x.id===id); if(!h) return;
+    h.items.forEach(it=>addToCart({ id:it.id,name:it.name,unitPrice:it.unit,qty:it.qty,meta:it.meta||null,pick:it.pick||null,type:it.type||'extra' }));
+  }));
+  list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>{
+    const id=+b.getAttribute('data-delete');
+    state.history = state.history.filter(x=>x.id!==id); persistHistory(); renderHistory();
+  }));
+}
+document.getElementById('clearHistoryBtn').addEventListener('click',()=>{ if(confirm('Clear order history?')){ state.history=[]; persistHistory(); renderHistory(); }});
+
+/* =========================
+   SELECTOR WIZARD with Half/Max
+========================= */
+const comboModal=document.getElementById('comboModal');
+const comboTitle=document.getElementById('comboTitle');
+const comboSteps=document.getElementById('comboSteps');
+const comboContent=document.getElementById('comboContent');
+const comboPrev=document.getElementById('comboPrev');
+const comboNext=document.getElementById('comboNext');
+document.getElementById('closeCombo').addEventListener('click',()=>comboModal.close());
+
+function openComboWizard(item, qty){
+  const usedTotal = obj => Object.values(obj).reduce((a,b)=>a+b,0);
+  const poolEdibles = MENU.edibles;
+  const poolVapes   = MENU.vapes;
+
+  // Which mode
+  const edNeed = item.ediblesIncluded||0;
+  const vpNeed = item.vapesIncluded||0;
+  const counts = {};
+  let confirmMode=false;
+
+  function renderGrid(pool, needed, label){
+    const used=usedTotal(counts), remaining=needed-used;
+    comboTitle.textContent = `${label}: pick ${needed} (remaining ${Math.max(0,remaining)})`;
+    comboSteps.innerHTML = confirmMode ? `1. ${label} · <strong>2. Confirm</strong>` : `<strong>1. ${label}</strong> · 2. Confirm`;
+    comboContent.innerHTML = `
+      <div class="selector-grid">
+        ${pool.map(p=>`
+          <div class="select-card">
+            <div class="select-title">${p.name}</div>
+            <div class="select-qty">
+              <button data-minus="${p.id}">−</button>
+              <output data-out="${p.id}">${counts[p.id]||0}</output>
+              <button data-plus="${p.id}">+</button>
+            </div>
+            <div class="toolrow" style="gap:6px;margin-top:6px">
+              <button class="btn" data-half="${p.id}">Half</button>
+              <button class="btn" data-max="${p.id}">Max</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+    // +/- handlers
+    comboContent.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-plus'); if(usedTotal(counts)<needed){ counts[id]=(counts[id]||0)+1; renderGrid(pool,needed,label); }
+    }));
+    comboContent.querySelectorAll('[data-minus]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-minus'); counts[id]=Math.max(0,(counts[id]||0)-1); renderGrid(pool,needed,label);
+    }));
+
+    // Half / Max (per-item)
+    comboContent.querySelectorAll('[data-half]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-half'); const curr=counts[id]||0;
+      const usedWithout = usedTotal(counts) - curr;
+      const remainingForThis = Math.max(0, needed - usedWithout);
+      const target = Math.min(Math.ceil(needed/2), remainingForThis);
+      counts[id]=target; renderGrid(pool,needed,label);
+    }));
+    comboContent.querySelectorAll('[data-max]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-max'); const curr=counts[id]||0;
+      const usedWithout = usedTotal(counts) - curr;
+      counts[id] = Math.max(0, needed - usedWithout); renderGrid(pool,needed,label);
+    }));
+
+    comboPrev.style.display='none';
+    comboNext.textContent = confirmMode ? 'Add to Cart' : 'Next';
+    comboNext.disabled = remaining>0;
+  }
+
+  function renderConfirm(needed, label){
+    comboTitle.textContent=item.name;
+    const fmt = id => (poolEdibles.concat(poolVapes).find(x=>x.id===id)||{}).name || id;
+    const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
+    comboSteps.innerHTML = `1. ${label} · <strong>2. Confirm</strong>`;
+    comboContent.innerHTML = `<div class="summary" style="gap:10px;">
+      ${parts.length?`<div><strong>${label}:</strong> ${parts.join(', ')}</div>`:''}
+      ${item.description?`<div class="muted">${item.description}</div>`:''}
+    </div>`;
+    comboPrev.style.display='none';
+    comboNext.textContent='Add to Cart';
+    comboNext.disabled=false;
+  }
+
+  const needed = edNeed>0 ? edNeed : vpNeed;
+  const label = edNeed>0 ? 'Edibles' : 'Vapes';
+  const pool  = edNeed>0 ? poolEdibles : poolVapes;
+
+  comboPrev.onclick = ()=>{};
+  comboNext.onclick = ()=>{
+    if(!confirmMode){ confirmMode=true; renderConfirm(needed,label); return; }
+    const fmt = id => (pool.find(x=>x.id===id)||{}).name || id;
+    const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
+    addToCart({
+      id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
+      pick:counts, meta: `${label}: ${parts.join(', ')}`
+    });
+    comboModal.close();
+  };
+
+  renderGrid(pool, needed, label);
+  comboModal.showModal();
+}
+
+/* =========================
+   INGREDIENTS
+========================= */
+function aggregateIngredients(){
+  const add=(m,o)=>{ o[m]=(o[m]||0)+1; };
+  const tally={};
+  state.cart.forEach(line=>{
+    // recipe for sold item itself
+    if(RECIPE_MAP[line.id]){
+      for(const [ing,count] of Object.entries(RECIPE_MAP[line.id])){
+        for(let i=0;i<count*line.qty;i++) add(ing,tally);
+      }
+    }
+    // recipe for bundle selections
+    if(line.pick){
+      for(const [id,c] of Object.entries(line.pick)){
+        if(RECIPE_MAP[id]){
+          for(const [ing,n] of Object.entries(RECIPE_MAP[id])){
+            const total = n * c * (line.qty||1);
+            tally[ing]=(tally[ing]||0)+total;
+          }
+        }
+      }
+    }
+  });
+  return tally;
+}
+function renderIngredients(){
+  const wrap=document.getElementById('ingredientList');
+  const entries=Object.entries(aggregateIngredients()).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!entries.length){ wrap.innerHTML='<div class="muted">No ingredients yet. Add items to the cart.</div>'; return; }
+  wrap.innerHTML = entries.map(([n,c])=>`<div style="display:grid;grid-template-columns:1fr auto;gap:8px"><div>${n}</div><div><strong>x${c}</strong></div></div>`).join('');
+}
+
+document.getElementById('copyIngBtn').addEventListener('click',()=>{
+  const txt=Object.entries(aggregateIngredients()).sort((a,b)=>a[0].localeCompare(b[0])).map(([n,c])=>`- ${n} x${c}`).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>alert('Ingredients copied!'));
+});
+document.getElementById('exportIngBtn').addEventListener('click',()=>{
+  const rows=[['Ingredient','Count'],...Object.entries(aggregateIngredients()).sort((a,b)=>a[0].localeCompare(b[0]))];
+  const csv=rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='green_wonderland_ingredients.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+/* =========================
+   INIT / THEME / CHECKOUT
+========================= */
+function renderAll(){ renderCards(); renderCart(); renderFulfillment(); renderTotals(); renderDiscount(); renderIngredients(); renderHistory(); }
+function checkout(){
+  if(!state.cart.length){ alert('Your order is empty.'); return; }
+  const subtotal=state.cart.reduce((s,l)=>s+l.unitPrice*l.qty,0);
+  const manual=+(subtotal*(state.discountPct/100)).toFixed(2);
+  const promo=computePromotions();
+  const fee=state.fulfillment==='delivery'?(ZONE_FEES[state.deliveryZone]||0):0;
+  const total=+(subtotal+fee-manual-promo.discount).toFixed(2);
+  const entry={ id:Date.now(),
+    items:state.cart.map(l=>({id:l.id,name:l.name,qty:l.qty,unit:l.unitPrice,meta:l.meta||null,pick:l.pick||null,type:l.type||'extra',lineTotal:+(l.unitPrice*l.qty).toFixed(2)})),
+    discountPct:state.discountPct, subtotal:+subtotal.toFixed(2), deliveryFee:fee, promoDiscount:promo.discount, manualDiscount:manual, total };
+  state.history.unshift(entry); persistHistory();
+  state.cart=[]; state.discountPct=0; persist(); renderAll(); selectTab('summary');
+}
+function resetAll(){ state.cart=[]; state.discountPct=0; persist(); renderAll(); }
+
+document.getElementById('checkoutBtn').addEventListener('click',checkout);
+document.getElementById('checkoutBtn2').addEventListener('click',checkout);
+document.getElementById('resetBtn').addEventListener('click',resetAll);
+document.getElementById('resetBtn2').addEventListener('click',resetAll);
+
+const themeBtn=document.getElementById('themeBtn');
+function applyTheme(t){ document.documentElement.setAttribute('data-theme',t); localStorage.setItem('gw_theme',t); themeBtn.textContent = t==='dark' ? '☀️ Light' : '🌙 Dark'; themeBtn.setAttribute('aria-pressed',t==='dark'); }
+applyTheme(localStorage.getItem('gw_theme')||'light');
+themeBtn.addEventListener('click',()=>applyTheme((localStorage.getItem('gw_theme')||'light')==='light'?'dark':'light'));
+
+const tabButtons=document.querySelectorAll('[data-tab]');
+function selectTab(which){
+  document.getElementById('tab-summary').hidden = which!=='summary';
+  document.getElementById('tab-ingredients').hidden = which!=='ingredients';
+  document.getElementById('tab-history').hidden = which!=='history';
+  tabButtons.forEach(b=>b.setAttribute('aria-selected', String(b.getAttribute('data-tab')===which)));
+}
+tabButtons.forEach(b=>b.addEventListener('click',()=>selectTab(b.getAttribute('data-tab'))));
+
+renderAll();
+</script>
+</body>
+</html>
