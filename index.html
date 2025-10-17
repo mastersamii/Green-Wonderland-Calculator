@@ -153,9 +153,15 @@
 
   select, input[type="radio"]{accent-color:var(--accent)}
   select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 8px;box-shadow:inset 0 0 0 1px var(--border-strong)}
-  .option-list{display:grid;gap:8px}
-  .option-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card)}
-  .option-row label{display:flex;align-items:center;gap:8px}
+
+  /* Flower group columns */
+  .flower-groups{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start
+  }
+  @media (max-width:980px){
+    .flower-groups{grid-template-columns:1fr}
+  }
+  .flower-col h4{margin:0 0 6px;font-size:1rem}
 </style>
 </head>
 <body>
@@ -192,7 +198,20 @@
         <div class="divider"></div>
 
         <h3 style="margin:0 0 6px">Flower (Quantity Based)</h3>
-        <div class="cards" id="flower"></div>
+        <div class="flower-groups">
+          <div class="flower-col">
+            <h4>Basic</h4>
+            <div class="cards" id="flower-basic"></div>
+          </div>
+          <div class="flower-col">
+            <h4>Premium</h4>
+            <div class="cards" id="flower-premium"></div>
+          </div>
+          <div class="flower-col">
+            <h4>Exotic</h4>
+            <div class="cards" id="flower-exotic"></div>
+          </div>
+        </div>
 
         <div class="divider"></div>
 
@@ -287,7 +306,7 @@
   </div>
 </div>
 
-<!-- Selector Modal (bundles, strain & flavor pickers) -->
+<!-- Selector Modal (bundles & flavors) -->
 <dialog id="comboModal">
   <div class="modal-header">
     <strong id="comboTitle">Choose Items</strong>
@@ -323,16 +342,6 @@ const MENU = {
     { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
-  /* Quantity-based Flower (not weight menus) — price varies by strain selection */
-  flower: [
-    { id:'flower-basic-joint',    name:'Basic Joint',     priceFrom:150, type:'flower' },
-    { id:'flower-basic-quarter',  name:'Basic Quarter',   priceFrom:150, type:'flower' },
-    { id:'flower-premium-joint',  name:'Premium Joint',   priceFrom:250, type:'flower' },
-    { id:'flower-exotic-joint',   name:'Exotic Joint',    priceFrom:350, type:'flower' },
-    { id:'flower-premium-quarter',name:'Premium Quarter', priceFrom:250, type:'flower' },
-    { id:'flower-exotic-quarter', name:'Exotic Quarter',  priceFrom:350, type:'flower' }
-  ],
-
   edibles: [
     { id:'brownie-6', name:'6× Brownies', price:250, type:'edible' },
     { id:'gummy-3',   name:'3× Gummies',  price:250, type:'edible' },
@@ -353,24 +362,14 @@ const MENU = {
     { id:'cocoa',      name:'Cocoa Powder',  price:10,  type:'extra' },
     { id:'jolly',      name:'Jolly Ranchers',price:10,  type:'extra' },
     { id:'weed-seeds', name:'Weed Seeds',    price:10,  type:'extra' }
-    /* Removed: Packaged Weed, Plain Vape, Weed 1q */
   ]
 };
 
-/* Flower strains w/ prices by tier */
+/* Flower strains grouped by tier */
 const STRAIN_GROUPS = [
-  {
-    tier: 'Basic', price: 150,
-    items: ['AK-47','Sour Diesel','Blue Dream']
-  },
-  {
-    tier: 'Premium', price: 250,
-    items: ['Bubble Berry','Trainwreck','OG Kush','Gorilla Glue']
-  },
-  {
-    tier: 'Exotic', price: 350,
-    items: ['Northern Lights']
-  }
+  { tier:'Basic', price:150, items:['AK-47','Sour Diesel','Blue Dream'] },
+  { tier:'Premium', price:250, items:['Bubble Berry','Trainwreck','OG Kush','Gorilla Glue'] },
+  { tier:'Exotic', price:350, items:['Northern Lights'] }
 ];
 
 /* Flavors for flavored Geek Bar */
@@ -406,20 +405,15 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
    RENDER: CARDS
 ========================= */
 function cardHTML(item){
-  const needsWizard = (item.ediblesIncluded||0)>0;
-  const needsStrain = item.type==='flower';
-  const needsFlavor = item.needsFlavor===true;
+  const needsWizard = (item.ediblesIncluded||0)>0;        // bundles only
+  const needsFlavor = item.needsFlavor===true;            // flavored vapes
   const actionAttr  = needsWizard ? `data-wizard="${item.id}"` :
-                      needsStrain ? `data-strain="${item.id}"` :
                       needsFlavor ? `data-flavor="${item.id}"` :
                                     `data-add="${item.id}"`;
   const cta         = needsWizard ? 'Choose &amp; Add' :
-                      needsStrain ? 'Pick Strain &amp; Add' :
                       needsFlavor ? 'Pick Flavor &amp; Add' :
                                     'Add';
-  const priceHtml   = needsStrain 
-      ? `<span class="price">from ${currency(item.priceFrom||0)}</span>`
-      : `<span class="price">${currency(item.price)}</span>`;
+  const priceHtml   = `<span class="price">${currency(item.price)}</span>`;
 
   return `
   <article class="card">
@@ -437,16 +431,40 @@ function cardHTML(item){
   </article>`;  
 }
 
+/* Build per-strain flower items (Joint + Quarter for each strain) */
+function buildFlowerItems(){
+  const items=[];
+  STRAIN_GROUPS.forEach(g=>{
+    g.items.forEach(s=>{
+      items.push(
+        { id:`${s.toLowerCase().replace(/\s+/g,'-')}-joint`,   name:`${s} Joint`,   price:g.price, type:'flower', tier:g.tier },
+        { id:`${s.toLowerCase().replace(/\s+/g,'-')}-quarter`, name:`${s} Quarter`, price:g.price, type:'flower', tier:g.tier }
+      );
+    });
+  });
+  return items;
+}
+
 function renderCards(){
   const $ = sel => document.querySelector(sel);
   $('#vapes').innerHTML   = MENU.vapes.map(cardHTML).join('');
   $('#refills').innerHTML = MENU.refills.map(cardHTML).join('');
-  $('#flower').innerHTML  = MENU.flower.map(cardHTML).join('');
   $('#edibles').innerHTML = MENU.edibles.map(cardHTML).join('');
   $('#bundles').innerHTML = MENU.bundles.map(cardHTML).join('');
   $('#extras').innerHTML  = MENU.extras.map(cardHTML).join('');
 
-  const all = [...MENU.vapes, ...MENU.refills, ...MENU.flower, ...MENU.edibles, ...MENU.bundles, ...MENU.extras];
+  const flowerItems = buildFlowerItems();
+  const basicHTML   = flowerItems.filter(f=>f.tier==='Basic').map(cardHTML).join('');
+  const premiumHTML = flowerItems.filter(f=>f.tier==='Premium').map(cardHTML).join('');
+  const exoticHTML  = flowerItems.filter(f=>f.tier==='Exotic').map(cardHTML).join('');
+  document.getElementById('flower-basic').innerHTML   = basicHTML;
+  document.getElementById('flower-premium').innerHTML = premiumHTML;
+  document.getElementById('flower-exotic').innerHTML  = exoticHTML;
+
+  const all = [
+    ...MENU.vapes, ...MENU.refills, ...MENU.edibles, ...MENU.bundles, ...MENU.extras,
+    ...flowerItems
+  ];
 
   document.querySelectorAll('.cards .card').forEach(card=>{
     let count=1; const out=card.querySelector('output');
@@ -454,17 +472,12 @@ function renderCards(){
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
 
     const wizId    = card.querySelector('[data-wizard]')?.getAttribute('data-wizard');
-    const strainId = card.querySelector('[data-strain]')?.getAttribute('data-strain');
     const flavorId = card.querySelector('[data-flavor]')?.getAttribute('data-flavor');
+    const addId    = card.querySelector('[data-add]')?.getAttribute('data-add');
 
     if(wizId){
       const item = all.find(i=>i.id===wizId);
       card.querySelector('[data-wizard]').addEventListener('click',()=>openBundleWizard(item,count));
-      return;
-    }
-    if(strainId){
-      const item = all.find(i=>i.id===strainId);
-      card.querySelector('[data-strain]')?.addEventListener('click',()=>openStrainPicker(item,count));
       return;
     }
     if(flavorId){
@@ -472,7 +485,6 @@ function renderCards(){
       card.querySelector('[data-flavor]')?.addEventListener('click',()=>openFlavorPicker(item,count));
       return;
     }
-    const addId = card.querySelector('[data-add]')?.getAttribute('data-add');
     if(addId){
       const item = all.find(i=>i.id===addId);
       card.querySelector('[data-add]')?.addEventListener('click',()=>{
@@ -591,7 +603,7 @@ function renderHistory(){
 document.getElementById('clearHistoryBtn').addEventListener('click',()=>{ if(confirm('Clear order history?')){ state.history=[]; persistHistory(); renderHistory(); }});
 
 /* =========================
-   WIZARDS
+   WIZARDS (bundles & flavors)
 ========================= */
 const comboModal=document.getElementById('comboModal');
 const comboTitle=document.getElementById('comboTitle');
@@ -665,90 +677,6 @@ function openBundleWizard(item, qty){
   };
 
   renderGrid();
-  comboModal.showModal();
-}
-
-/* Strain picker for flower — sets price by tier */
-function openStrainPicker(item, qty){
-  comboTitle.textContent = `Choose Strain — ${item.name}`;
-  let step = 1;
-  let selected = { tier:null, name:null, price: null };
-
-  function renderTier(){
-    step = 1;
-    comboSteps.innerHTML = `<strong>1. Tier</strong> · 2. Strain · 3. Confirm`;
-    comboContent.innerHTML = `
-      <div class="option-list">
-        ${STRAIN_GROUPS.map(g=>`
-          <div class="option-row">
-            <label><input type="radio" name="tier" value="${g.tier}"> ${g.tier} — ${currency(g.price)}</label>
-          </div>`).join('')}
-      </div>`;
-    comboPrev.style.display='none';
-    comboNext.textContent='Next';
-    comboNext.disabled=true;
-    comboContent.querySelectorAll('input[name="tier"]').forEach(r=>{
-      r.addEventListener('change',()=>{
-        selected.tier=r.value;
-        const group=STRAIN_GROUPS.find(x=>x.tier===selected.tier);
-        selected.price=group.price;
-        comboNext.disabled=false;
-      });
-    });
-  }
-
-  function renderStrain(){
-    step = 2;
-    comboSteps.innerHTML = `1. Tier · <strong>2. Strain</strong> · 3. Confirm`;
-    const group=STRAIN_GROUPS.find(x=>x.tier===selected.tier);
-    comboContent.innerHTML = `
-      <div class="option-list">
-        ${group.items.map(s=>`
-          <div class="option-row">
-            <label><input type="radio" name="strain" value="${s}"> ${s}</label>
-          </div>`).join('')}
-      </div>`;
-    comboPrev.style.display='inline-flex';
-    comboNext.textContent='Next';
-    comboNext.disabled=true;
-    comboContent.querySelectorAll('input[name="strain"]').forEach(r=>{
-      r.addEventListener('change',()=>{ selected.name=r.value; comboNext.disabled=false; });
-    });
-  }
-
-  function renderConfirm(){
-    step = 3;
-    comboSteps.innerHTML = `1. Tier · 2. Strain · <strong>3. Confirm</strong>`;
-    comboContent.innerHTML = `<div class="summary" style="gap:10px;">
-      <div><strong>Strain:</strong> ${selected.name} (${selected.tier})</div>
-      <div><strong>Price:</strong> ${currency(selected.price)} each</div>
-    </div>`;
-    comboPrev.style.display='inline-flex';
-    comboNext.textContent='Add to Cart';
-    comboNext.disabled=false;
-  }
-
-  comboPrev.onclick = ()=>{
-    if(step===2) renderTier();
-    else if(step===3) renderStrain();
-  };
-  comboNext.onclick = ()=>{
-    if(step===1) renderStrain();
-    else if(step===2) renderConfirm();
-    else {
-      addToCart({
-        id:item.id,
-        name:`${item.name}`,
-        unitPrice:selected.price,
-        qty:qty||1,
-        type:item.type,
-        meta:`Strain: ${selected.name} (${selected.tier})`
-      });
-      comboModal.close();
-    }
-  };
-
-  renderTier();
   comboModal.showModal();
 }
 
