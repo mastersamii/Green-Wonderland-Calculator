@@ -353,7 +353,7 @@ const MENU = {
 
   refills: [
     { id:'refill-plain',  name:'Refill: Geek Bar (Plain)',    price:400, type:'service' },
-    { id:'refill-flavor', name:'Refill: Geek Bar (Flavored)', price:400, type:'service' },
+    { id:'refill-flavor', name:'Refill: Geek Bar (Flavored)', price:400, type:'service', needsFlavor: true },
     { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
@@ -381,7 +381,7 @@ const MENU = {
       description:'Geek Bar (Plain) + Refill (Plain) + snack of your choice.' },
 
     { id:'bd-flavor-fan', name:'Flavor Fan', price:1250, type:'bundle',
-      components:[{id:'geek-flavor',qty:1,needsFlavor:true},{id:'refill-flavor',qty:1}],
+      components:[{id:'geek-flavor',qty:1,needsFlavor:true},{id:'refill-flavor',qty:1,needsFlavor:true}],
       snackChoice:true,
       description:'Flavored Geek Bar + Refill (Flavored) + snack of your choice.' },
 
@@ -431,7 +431,7 @@ const STRAIN_GROUPS = [
   { tier:'Exotic', price:350, items:['Northern Lights'] }
 ];
 
-/* Flavors for flavored Geek Bar */
+/* Flavors for flavored Geek Bar / Refill */
 const VAPE_FLAVORS = ['Strawberry','Mango','Apple','Menthol','Blueberry'];
 
 /* Snack choices (no lighter) */
@@ -468,7 +468,7 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
 ========================= */
 function cardHTML(item){
   const needsWizard = (item.ediblesIncluded||0)>0 || item.components || item.dynamic; // bundles
-  const needsFlavor = item.needsFlavor===true;            // flavored vapes
+  const needsFlavor = item.needsFlavor===true;            // flavored vapes/refills
   const needsStrain = item.pickStrain===true;             // flower entry points
   const actionAttr  = needsWizard ? `data-wizard="${item.id}"` :
                       needsFlavor ? `data-flavor="${item.id}"` :
@@ -747,22 +747,29 @@ function openEdibleDuoWizard(item, qty){
 /* ---- Fixed components bundle (Starter / Flavor Fan / THC Chill) ---- */
 function openFixedComponentsBundle(item, qty){
   let step = 1;
-  const picks = { flavors:{}, snack:null };
+  const picks = { flavors:{} , snack:null };
 
   comboTitle.textContent = item.name;
 
+  function findById(id){
+    return [...MENU.vapes, ...MENU.refills, ...MENU.extras, ...MENU.edibles].find(x=>x.id===id);
+  }
+
   function renderFlavorStepIfNeeded(){
-    const flavored = (item.components||[]).filter(c=>c.id==='geek-flavor' || c.needsFlavor);
+    const flavored = (item.components||[]).filter(c=>c.id==='geek-flavor' || c.id==='refill-flavor' || c.needsFlavor);
     if(!flavored.length){ return false; }
     comboSteps.innerHTML = `<strong>1. Flavor</strong> · 2. Snack · 3. Confirm`;
-    // One flavor selection per flavored component (applies to its qty)
-    comboContent.innerHTML = flavored.map(f=>`
+    comboContent.innerHTML = flavored.map(f=>{
+      const it=findById(f.id);
+      const labelTxt = it ? `Flavor for ${it.name}` : 'Flavor';
+      return `
       <div class="option-row">
-        <label><strong>Flavor for Flavored Geek</strong></label>
+        <label><strong>${labelTxt}</strong></label>
         <select data-flavor-for="${f.id}">
           ${VAPE_FLAVORS.map(fl=>`<option value="${fl}">${fl}</option>`).join('')}
         </select>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     comboPrev.style.display='none';
     comboNext.textContent='Next';
     comboNext.disabled=false;
@@ -798,8 +805,8 @@ function openFixedComponentsBundle(item, qty){
       const it = [...MENU.vapes, ...MENU.refills].find(x=>x.id===c.id);
       if(!it) return;
       let note = '';
-      if(it.id==='geek-flavor'){
-        const fl = picks.flavors['geek-flavor'] || VAPE_FLAVORS[0];
+      if((it.id==='geek-flavor' || it.id==='refill-flavor')){
+        const fl = picks.flavors[it.id] || VAPE_FLAVORS[0];
         note = ` (Flavor: ${fl})`;
       }
       parts.push(`${c.qty}× ${it.name}${note}`);
@@ -817,7 +824,7 @@ function openFixedComponentsBundle(item, qty){
 
   comboPrev.onclick = ()=>{
     if(step===2){ // from Snack back to Flavor or close
-      const hadFlavor = (item.components||[]).some(c=>c.id==='geek-flavor' || c.needsFlavor);
+      const hadFlavor = (item.components||[]).some(c=>c.id==='geek-flavor' || c.id==='refill-flavor' || c.needsFlavor);
       if(hadFlavor){ step=1; renderFlavorStepIfNeeded(); }
       else { comboModal.close(); }
     } else if(step===3){
@@ -835,12 +842,14 @@ function openFixedComponentsBundle(item, qty){
     if(step===2){ step=3; renderConfirm(); return; }
 
     // Add to cart
-    const flavorMeta = (picks.flavors['geek-flavor']) ? `Flavor: ${picks.flavors['geek-flavor']}` : null;
+    const metaBits=[];
+    if(picks.flavors['geek-flavor'])   metaBits.push(`Geek Flavor: ${picks.flavors['geek-flavor']}`);
+    if(picks.flavors['refill-flavor']) metaBits.push(`Refill Flavor: ${picks.flavors['refill-flavor']}`);
     const snackMeta  = (MENU.extras.find(x=>x.id===picks.snack)||{}).name;
-    const metas = [flavorMeta, snackMeta?`Snack: ${snackMeta}`:null].filter(Boolean).join(' • ');
+    if(snackMeta) metaBits.push(`Snack: ${snackMeta}`);
     addToCart({
       id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
-      meta: metas
+      meta: metaBits.join(' • ') || null
     });
     comboModal.close();
   };
@@ -859,7 +868,8 @@ function openDynamicBundleWizard(item, qty){
   const counts = {};
   let step=1;
   let selectedSnack=null;
-  let flavoredFlavor=null;
+  let vapeFlavor=null;
+  let refillFlavor=null;
 
   function totalSelected(){ return Object.values(counts).reduce((a,b)=>a+b,0); }
 
@@ -895,20 +905,34 @@ function openDynamicBundleWizard(item, qty){
     }));
   }
 
-  const needsFlavorStep = () => Object.keys(counts).includes('geek-flavor') && counts['geek-flavor']>0 && dyn.from==='vapes';
+  const needsFlavorStep = () => 
+    (dyn.from==='vapes'   && counts['geek-flavor']   > 0) ||
+    (dyn.from==='refills' && counts['refill-flavor'] > 0);
+
   const needsSnackStep  = !!item.snackChoice || !!dyn.snackFree;
 
   function renderOptions(){
     step=2;
     const pieces=[];
-    if(needsFlavorStep()){
-      const sel = `<div class="option-row">
+    if(dyn.from==='vapes' && counts['geek-flavor']>0){
+      pieces.push(`
+        <div class="option-row">
           <label><strong>Flavor for Flavored Geek</strong></label>
-          <select id="bundleFlavorSel">
+          <select id="bundleFlavorSelVape">
             ${VAPE_FLAVORS.map(f=>`<option value="${f}">${f}</option>`).join('')}
           </select>
-        </div>`;
-      pieces.push(sel);
+        </div>
+      `);
+    }
+    if(dyn.from==='refills' && counts['refill-flavor']>0){
+      pieces.push(`
+        <div class="option-row">
+          <label><strong>Flavor for Flavored Refill</strong></label>
+          <select id="bundleFlavorSelRefill">
+            ${VAPE_FLAVORS.map(f=>`<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>
+      `);
     }
     if(needsSnackStep()){
       const snackRows = SNACK_IDS.map(id=>{
@@ -922,20 +946,23 @@ function openDynamicBundleWizard(item, qty){
     comboContent.innerHTML = pieces.join('') || `<div class="muted">No extra options for this bundle.</div>`;
     comboPrev.style.display='inline-flex';
     comboNext.textContent='Next';
-    // require selections if present
-    let needSnack=needsSnackStep(); let needFlavor=needsFlavorStep();
-    const updateDisabled = ()=>{
-      comboNext.disabled = (needSnack && !selectedSnack) || (needFlavor && !flavoredFlavor);
-    };
-    updateDisabled();
 
-    const flavorSel=document.getElementById('bundleFlavorSel');
-    if(flavorSel){
-      flavoredFlavor=flavorSel.value; flavorSel.addEventListener('change',()=>{ flavoredFlavor=flavorSel.value; updateDisabled(); });
-    }
+    const updateDisabled = ()=>{
+      const needV = (dyn.from==='vapes'   && counts['geek-flavor']>0) && !vapeFlavor;
+      const needR = (dyn.from==='refills' && counts['refill-flavor']>0) && !refillFlavor;
+      const needS = needsSnackStep() && !selectedSnack;
+      comboNext.disabled = needV || needR || needS;
+    };
+
+    const selV = document.getElementById('bundleFlavorSelVape');
+    if(selV){ vapeFlavor = selV.value; selV.addEventListener('change',()=>{ vapeFlavor = selV.value; updateDisabled(); }); }
+    const selR = document.getElementById('bundleFlavorSelRefill');
+    if(selR){ refillFlavor = selR.value; selR.addEventListener('change',()=>{ refillFlavor = selR.value; updateDisabled(); }); }
+
     comboContent.querySelectorAll('input[name="snack"]').forEach(r=>{
       r.addEventListener('change',()=>{ selectedSnack=r.value; updateDisabled(); });
     });
+    updateDisabled();
   }
 
   function renderConfirm(){
@@ -951,7 +978,8 @@ function openDynamicBundleWizard(item, qty){
       const it=pool.find(x=>x.id===id);
       if(!it) return;
       let note='';
-      if(it.id==='geek-flavor' && flavoredFlavor){ note=` (Flavor: ${flavoredFlavor})`; }
+      if(it.id==='geek-flavor'   && vapeFlavor)   note=` (Flavor: ${vapeFlavor})`;
+      if(it.id==='refill-flavor' && refillFlavor) note=` (Flavor: ${refillFlavor})`;
       descParts.push(`${c}× ${it.name}${note}`);
     });
     const snackName = selectedSnack ? (MENU.extras.find(x=>x.id===selectedSnack)||{}).name : null;
@@ -969,8 +997,9 @@ function openDynamicBundleWizard(item, qty){
 
     comboNext.onclick = ()=>{
       const metaBits=[];
-      if(flavoredFlavor) metaBits.push(`Flavor: ${flavoredFlavor}`);
-      if(snackName) metaBits.push(`Snack: ${snackName}`);
+      if(vapeFlavor)   metaBits.push(`Geek Flavor: ${vapeFlavor}`);
+      if(refillFlavor) metaBits.push(`Refill Flavor: ${refillFlavor}`);
+      if(snackName)    metaBits.push(`Snack: ${snackName}`);
       addToCart({
         id:item.id,
         name:item.name,
@@ -997,7 +1026,7 @@ function openDynamicBundleWizard(item, qty){
   comboModal.showModal();
 }
 
-/* ---- Flavor picker for single items ---- */
+/* ---- Flavor picker for single items (vape + refill flavored) ---- */
 function openFlavorPicker(item, qty){
   comboTitle.textContent = `Choose Flavor — ${item.name}`;
   comboSteps.innerHTML = `<strong>1. Flavor</strong> · 2. Confirm`;
