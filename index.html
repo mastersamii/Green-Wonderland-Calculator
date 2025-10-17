@@ -157,14 +157,13 @@
   .option-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card)}
   .option-row label{display:flex;align-items:center;gap:8px}
 
-  /* Flower two-column layout */
-  .flower-two{
-    display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start
-  }
+  /* Flower rows: each row has exactly two cards (Joint, Quarter) */
+  .flower-rows{display:grid;gap:12px}
+  .cards-2{display:grid;grid-template-columns:repeat(2,minmax(230px,1fr));gap:12px}
   @media (max-width:980px){
-    .flower-two{grid-template-columns:1fr}
+    .cards-2{grid-template-columns:1fr}
   }
-  .flower-col h4{margin:0 0 6px;font-size:1rem}
+  .flower-row h4{margin:0 0 6px;font-size:1rem}
 </style>
 </head>
 <body>
@@ -201,18 +200,19 @@
         <div class="divider"></div>
 
         <h3 style="margin:0 0 6px">Flower (Quantity Based)</h3>
-        <!-- Two columns: left = Basic; right = Premium + Exotic -->
-        <div class="flower-two">
-          <div class="flower-col">
+        <!-- Three horizontal rows: Basic, Premium, Exotic -->
+        <div class="flower-rows">
+          <div class="flower-row">
             <h4>Basic</h4>
-            <div class="cards" id="flower-basic"></div>
+            <div class="cards-2" id="flower-basic"></div>
           </div>
-          <div class="flower-col">
-            <h4>Premium & Exotic</h4>
-            <div class="cards" id="flower-premium"></div>
-            <div class="divider" style="margin:8px 0"></div>
+          <div class="flower-row">
+            <h4>Premium</h4>
+            <div class="cards-2" id="flower-premium"></div>
+          </div>
+          <div class="flower-row">
             <h4>Exotic</h4>
-            <div class="cards" id="flower-exotic"></div>
+            <div class="cards-2" id="flower-exotic"></div>
           </div>
         </div>
 
@@ -455,17 +455,14 @@ function renderCards(){
   $('#bundles').innerHTML = MENU.bundles.map(cardHTML).join('');
   $('#extras').innerHTML  = MENU.extras.map(cardHTML).join('');
 
-  // Flower: left column = Basic; right column = Premium + Exotic
-  const basicHTML   = MENU.flowerEntry.filter(f=>f.tier==='Basic').map(cardHTML).join('');
-  const premiumHTML = MENU.flowerEntry.filter(f=>f.tier==='Premium').map(cardHTML).join('');
-  const exoticHTML  = MENU.flowerEntry.filter(f=>f.tier==='Exotic').map(cardHTML).join('');
-  document.getElementById('flower-basic').innerHTML   = basicHTML;
-  document.getElementById('flower-premium').innerHTML = premiumHTML;
-  document.getElementById('flower-exotic').innerHTML  = exoticHTML;
+  // Flower rows
+  document.getElementById('flower-basic').innerHTML   = MENU.flowerEntry.filter(f=>f.tier==='Basic').map(cardHTML).join('');
+  document.getElementById('flower-premium').innerHTML = MENU.flowerEntry.filter(f=>f.tier==='Premium').map(cardHTML).join('');
+  document.getElementById('flower-exotic').innerHTML  = MENU.flowerEntry.filter(f=>f.tier==='Exotic').map(cardHTML).join('');
 
   const all = [...MENU.vapes, ...MENU.refills, ...MENU.edibles, ...MENU.bundles, ...MENU.extras, ...MENU.flowerEntry];
 
-  document.querySelectorAll('.cards .card').forEach(card=>{
+  document.querySelectorAll('.cards .card, .cards-2 .card').forEach(card=>{
     let count=1; const out=card.querySelector('output');
     card.querySelector('button[aria-label="dec"]')?.addEventListener('click',()=>{ count=Math.max(1,count-1); out.value=count; });
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
