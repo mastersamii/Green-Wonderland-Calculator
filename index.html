@@ -41,6 +41,18 @@
     --muted:#a6b3a8; 
     --border-strong:var(--border-strong-dark);
   }
+[data-theme="dark"] select,
+[data-theme="dark"] option {
+  background: var(--card-dark) !important;
+  color: var(--text-dark) !important;
+  border: 1px solid var(--border-dark) !important;
+}
+
+[data-theme="dark"] option:hover,
+[data-theme="dark"] option:focus {
+  background: var(--leaf) !important;
+  color: #fff !important;
+}
 
   *{box-sizing:border-box}
   html,body{
