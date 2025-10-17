@@ -345,7 +345,8 @@ const MENU = {
     { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
-  flower: [
+  /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
+  flowerEntry: [
     { id:'basic-joint',   name:'Basic Joint',   price:150, type:'flower', tier:'Basic',   pickStrain:true },
     { id:'basic-quarter', name:'Basic Quarter', price:150, type:'flower', tier:'Basic',   pickStrain:true },
     { id:'premium-joint',   name:'Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
@@ -359,9 +360,9 @@ const MENU = {
     { id:'gummy-3',   name:'Gummy 3 pack',  price:250, type:'edible' },
   ],
 
-  /* Bundles (new) */
+  /* Bundles */
   bundles: [
-    /* Fixed-price vape+refill bundles with snack choice */
+    
     { id:'bd-starter', name:'Starter Pack (Plain)', price:1100, type:'bundle',
       components:[{id:'geek-plain',qty:1},{id:'refill-plain',qty:1}],
       snackChoice:true,
