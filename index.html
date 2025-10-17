@@ -360,21 +360,55 @@ const MENU = {
     { id:'gummy-3',   name:'3× Gummies',  price:250, type:'edible' },
   ],
 
+  /* Bundles (new) */
   bundles: [
+    /* Fixed-price vape+refill bundles with snack choice */
+    { id:'bd-starter', name:'Starter Pack (Plain)', price:1100, type:'bundle',
+      components:[{id:'geek-plain',qty:1},{id:'refill-plain',qty:1}],
+      snackChoice:true,
+      description:'Geek Bar (Plain) + Refill (Plain) + snack of your choice.' },
+
+    { id:'bd-flavor-fan', name:'Flavor Fan', price:1250, type:'bundle',
+      components:[{id:'geek-flavor',qty:1,needsFlavor:true},{id:'refill-flavor',qty:1}],
+      snackChoice:true,
+      description:'Flavored Geek Bar + Refill (Flavored) + snack of your choice.' },
+
+    { id:'bd-thc-chill', name:'THC Chill', price:1450, type:'bundle',
+      components:[{id:'geek-thc',qty:1},{id:'refill-thc',qty:1}],
+      snackChoice:true,
+      description:'Geek Bar (THC) + Refill (THC) + snack of your choice.' },
+
+    /* Vape mix bundles (percentage discount) */
+    { id:'bd-vape-duo',  name:'Vape Duo (any 2)',  type:'bundle',
+      dynamic:{ from:'vapes', count:2, discountPct:10 }, description:'Pick any 2 vapes and get 10% off.' },
+
+    { id:'bd-vape-trio', name:'Vape Trio (any 3)', type:'bundle',
+      dynamic:{ from:'vapes', count:3, discountPct:15 }, description:'Pick any 3 vapes and get 15% off.' },
+
+    /* Refill packs (with snack choice, discount on refills; snack is free) */
+    { id:'bd-refill-2', name:'Refill 2-Pack + Snack', type:'bundle',
+      dynamic:{ from:'refills', count:2, discountPct:10, snackFree:true }, snackChoice:true,
+      description:'Pick any 2 refills (10% off) and a free snack.' },
+
+    { id:'bd-refill-3', name:'Refill 3-Pack + Snack', type:'bundle',
+      dynamic:{ from:'refills', count:3, discountPct:15, snackFree:true }, snackChoice:true,
+      description:'Pick any 3 refills (15% off) and a free snack.' },
+
+    /* Existing edible duo stays */
     { id:'bd-edibles', name:'Edible Duo (pick 2)', price:500, type:'bundle', ediblesIncluded:2,
       description:'Choose any 2 edible packs.' }
   ],
 
   extras: [
     { id:'lighter',   name:'Lighter',        price:13,   type:'extra' },
-    { id:'wallet',    name:'Wallet',         price:650, type:'extra' },
-    { id:'lunch-box', name:'Lunch Box',      price:715, type:'extra' },
+    { id:'wallet',    name:'Wallet',         price:650,  type:'extra' },
+    { id:'lunch-box', name:'Lunch Box',      price:715,  type:'extra' },
     { id:'green-rolls', name:'Green Rolls',  price:300,  type:'extra' },
-    { id:'almond-joy', name:'Almond Joy',    price:25,  type:'extra' },
-    { id:'rice-kris',  name:'Rice Krispies', price:30,  type:'extra' },
-    { id:'cocoa',      name:'Cocoa Powder',  price:25,  type:'extra' },
-    { id:'jolly',      name:'Jolly Ranchers',price:25,  type:'extra' },
-    { id:'weed-seeds', name:'Weed Seeds',    price:25,  type:'extra' }
+    { id:'almond-joy', name:'Almond Joy',    price:25,   type:'extra' },
+    { id:'rice-kris',  name:'Rice Krispies', price:30,   type:'extra' },
+    { id:'cocoa',      name:'Cocoa Powder',  price:25,   type:'extra' },
+    { id:'jolly',      name:'Jolly Ranchers',price:25,   type:'extra' },
+    { id:'weed-seeds', name:'Weed Seeds',    price:25,   type:'extra' }
   ]
 };
 
@@ -387,6 +421,9 @@ const STRAIN_GROUPS = [
 
 /* Flavors for flavored Geek Bar */
 const VAPE_FLAVORS = ['Strawberry','Mango','Apple','Menthol','Blueberry'];
+
+/* Snack choices (no lighter) */
+const SNACK_IDS = ['almond-joy','rice-kris','jolly'];
 
 /* RECIPE MAP for edibles (for ingredients tab) */
 const RECIPE_MAP = {
@@ -418,7 +455,7 @@ const persistHistory=()=>localStorage.setItem(HIST_KEY,JSON.stringify(state.hist
    RENDER: CARDS
 ========================= */
 function cardHTML(item){
-  const needsWizard = (item.ediblesIncluded||0)>0;        // bundles only
+  const needsWizard = (item.ediblesIncluded||0)>0 || item.components || item.dynamic; // bundles
   const needsFlavor = item.needsFlavor===true;            // flavored vapes
   const needsStrain = item.pickStrain===true;             // flower entry points
   const actionAttr  = needsWizard ? `data-wizard="${item.id}"` :
@@ -429,7 +466,9 @@ function cardHTML(item){
                       needsFlavor ? 'Pick Flavor &amp; Add' :
                       needsStrain ? 'Pick Strain &amp; Add' :
                                     'Add';
-  const priceHtml   = `<span class="price">${currency(item.price)}</span>`;
+  const priceHtml   = (item.price!=null)
+      ? `<span class="price">${currency(item.price)}</span>`
+      : `<span class="price">custom</span>`;
 
   return `
   <article class="card">
@@ -615,8 +654,16 @@ const comboPrev=document.getElementById('comboPrev');
 const comboNext=document.getElementById('comboNext');
 document.getElementById('closeCombo').addEventListener('click',()=>comboModal.close());
 
-/* Edible bundle */
+/* Edible bundle (existing) */
 function openBundleWizard(item, qty){
+  // Branch by bundle kind
+  if(item.ediblesIncluded){ return openEdibleDuoWizard(item, qty); }
+  if(item.components){ return openFixedComponentsBundle(item, qty); }
+  if(item.dynamic){ return openDynamicBundleWizard(item, qty); }
+}
+
+/* ---- Edible Duo ---- */
+function openEdibleDuoWizard(item, qty){
   const usedTotal = obj => Object.values(obj).reduce((a,b)=>a+b,0);
   const counts = {};
   let confirmMode=false;
@@ -628,7 +675,7 @@ function openBundleWizard(item, qty){
   function renderGrid(){
     const used=usedTotal(counts), remaining=needed-used;
     comboTitle.textContent = `${label}: pick ${needed} (remaining ${Math.max(0,remaining)})`;
-    comboSteps.innerHTML = confirmMode ? `1. ${label} · <strong>2. Confirm</strong>` : `<strong>1. ${label}</strong> · 2. Confirm`;
+    comboSteps.innerHTML = confirmMode ? `1. ${label} · <strong>2. Snack/Confirm</strong>` : `<strong>1. ${label}</strong> · 2. Snack/Confirm`;
     comboContent.innerHTML = `
       <div class="selector-grid">
         ${pool.map(p=>`
@@ -654,10 +701,13 @@ function openBundleWizard(item, qty){
     comboNext.disabled = remaining>0;
   }
 
+  let snackChoice=null;
   function renderConfirm(){
     comboTitle.textContent=item.name;
-    const fmt = id => (pool.find(x=>x.id===id)||{}).name || id;
+    const fmt = id => (MENU.edibles.find(x=>x.id===id)||{}).name || id;
     const parts = Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${fmt(id)} x${c}`);
+
+    // Snack choice optional for future edible bundles; not included here by default
     comboSteps.innerHTML = `1. ${label} · <strong>2. Confirm</strong>`;
     comboContent.innerHTML = `<div class="summary" style="gap:10px;">
       ${parts.length?`<div><strong>${label}:</strong> ${parts.join(', ')}</div>`:''}
@@ -673,7 +723,7 @@ function openBundleWizard(item, qty){
     if(!confirmMode){ confirmMode=true; renderConfirm(); return; }
     addToCart({
       id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
-      pick:counts, meta: `Edibles: ${Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${(pool.find(x=>x.id===id)||{}).name||id} x${c}`).join(', ')}`
+      pick:counts, meta: `Edibles: ${Object.entries(counts).filter(([,c])=>c>0).map(([id,c])=>`${(MENU.edibles.find(x=>x.id===id)||{}).name||id} x${c}`).join(', ')}`
     });
     comboModal.close();
   };
@@ -682,7 +732,260 @@ function openBundleWizard(item, qty){
   comboModal.showModal();
 }
 
-/* Flavor picker for Geek Bar (Flavored) */
+/* ---- Fixed components bundle (Starter / Flavor Fan / THC Chill) ---- */
+function openFixedComponentsBundle(item, qty){
+  let step = 1;
+  const picks = { flavors:{}, snack:null };
+
+  comboTitle.textContent = item.name;
+
+  function renderFlavorStepIfNeeded(){
+    const flavored = (item.components||[]).filter(c=>c.id==='geek-flavor' || c.needsFlavor);
+    if(!flavored.length){ return false; }
+    comboSteps.innerHTML = `<strong>1. Flavor</strong> · 2. Snack · 3. Confirm`;
+    // One flavor selection per flavored component (applies to its qty)
+    comboContent.innerHTML = flavored.map(f=>`
+      <div class="option-row">
+        <label><strong>Flavor for Flavored Geek</strong></label>
+        <select data-flavor-for="${f.id}">
+          ${VAPE_FLAVORS.map(fl=>`<option value="${fl}">${fl}</option>`).join('')}
+        </select>
+      </div>`).join('');
+    comboPrev.style.display='none';
+    comboNext.textContent='Next';
+    comboNext.disabled=false;
+
+    comboContent.querySelectorAll('[data-flavor-for]').forEach(sel=>{
+      sel.addEventListener('change',()=>{ picks.flavors[sel.getAttribute('data-flavor-for')] = sel.value; });
+      // init default
+      picks.flavors[sel.getAttribute('data-flavor-for')] = sel.value;
+    });
+    return true;
+  }
+
+  function renderSnackStep(){
+    comboSteps.innerHTML = item.components.some(c=>c.id) ? `1. Flavor · <strong>2. Snack</strong> · 3. Confirm` : `<strong>1. Snack</strong> · 2. Confirm`;
+    const snackCards = SNACK_IDS.map(id=>{
+      const s = MENU.extras.find(x=>x.id===id);
+      return `<label class="option-row"><span>${s.name}</span><input type="radio" name="snack" value="${id}"></label>`;
+    }).join('');
+    comboContent.innerHTML = `<div class="option-list">${snackCards}</div>`;
+    comboPrev.style.display='inline-flex';
+    comboNext.textContent='Next';
+    comboNext.disabled=true;
+
+    comboContent.querySelectorAll('input[name="snack"]').forEach(r=>{
+      r.addEventListener('change',()=>{ picks.snack=r.value; comboNext.disabled=false; });
+    });
+  }
+
+  function renderConfirm(){
+    comboSteps.innerHTML = item.components.some(c=>c.id) ? `1. Flavor · 2. Snack · <strong>3. Confirm</strong>` : `1. Snack · <strong>2. Confirm</strong>`;
+    const parts = [];
+    item.components.forEach(c=>{
+      const it = [...MENU.vapes, ...MENU.refills].find(x=>x.id===c.id);
+      if(!it) return;
+      let note = '';
+      if(it.id==='geek-flavor'){
+        const fl = picks.flavors['geek-flavor'] || VAPE_FLAVORS[0];
+        note = ` (Flavor: ${fl})`;
+      }
+      parts.push(`${c.qty}× ${it.name}${note}`);
+    });
+    const snackName = (MENU.extras.find(x=>x.id===picks.snack)||{}).name || '';
+    comboContent.innerHTML = `<div class="summary" style="gap:10px;">
+      <div><strong>Included:</strong> ${parts.join(', ')}</div>
+      <div><strong>Snack:</strong> ${snackName}</div>
+      <div class="muted">${currency(item.price)} bundle</div>
+    </div>`;
+    comboPrev.style.display='inline-flex';
+    comboNext.textContent='Add to Cart';
+    comboNext.disabled=false;
+  }
+
+  comboPrev.onclick = ()=>{
+    if(step===2){ // from Snack back to Flavor or close
+      const hadFlavor = (item.components||[]).some(c=>c.id==='geek-flavor' || c.needsFlavor);
+      if(hadFlavor){ step=1; renderFlavorStepIfNeeded(); }
+      else { comboModal.close(); }
+    } else if(step===3){
+      step=2; renderSnackStep();
+    }
+  };
+
+  comboNext.onclick = ()=>{
+    const hadFlavor = renderFlavorStepIfNeeded();
+    if(step===1){
+      if(hadFlavor){ step=2; renderSnackStep(); }
+      else { step=2; renderSnackStep(); }
+      return;
+    }
+    if(step===2){ step=3; renderConfirm(); return; }
+
+    // Add to cart
+    const flavorMeta = (picks.flavors['geek-flavor']) ? `Flavor: ${picks.flavors['geek-flavor']}` : null;
+    const snackMeta  = (MENU.extras.find(x=>x.id===picks.snack)||{}).name;
+    const metas = [flavorMeta, snackMeta?`Snack: ${snackMeta}`:null].filter(Boolean).join(' • ');
+    addToCart({
+      id:item.id, name:item.name, unitPrice:item.price, qty:qty||1, type:item.type,
+      meta: metas
+    });
+    comboModal.close();
+  };
+
+  // Kickoff
+  if(!renderFlavorStepIfNeeded()){ step=2; renderSnackStep(); } else { step=1; }
+  comboModal.showModal();
+}
+
+/* ---- Dynamic bundles (Vape Duo/Trio, Refill 2/3) ---- */
+function openDynamicBundleWizard(item, qty){
+  const dyn = item.dynamic;
+  const pool = (dyn.from==='vapes') ? MENU.vapes.filter(v=>v.type==='vape') :
+               (dyn.from==='refills') ? MENU.refills :
+               [];
+  const counts = {};
+  let step=1;
+  let selectedSnack=null;
+  let flavoredFlavor=null;
+
+  function totalSelected(){ return Object.values(counts).reduce((a,b)=>a+b,0); }
+
+  function renderPick(){
+    comboTitle.textContent = item.name;
+    comboSteps.innerHTML = `<strong>1. Pick Items</strong> · 2. Options · 3. Confirm`;
+    comboContent.innerHTML = `
+      <div class="selector-grid">
+        ${pool.map(p=>`
+          <div class="select-card">
+            <div class="select-title">${p.name}</div>
+            <div class="muted">${currency(p.price)}</div>
+            <div class="select-qty">
+              <button data-minus="${p.id}">−</button>
+              <output data-out="${p.id}">${counts[p.id]||0}</output>
+              <button data-plus="${p.id}">+</button>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="muted">Pick exactly ${dyn.count} item(s).</div>
+    `;
+    comboPrev.style.display='none';
+    comboNext.textContent='Next';
+    comboNext.disabled = totalSelected()!==dyn.count;
+
+    comboContent.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-plus');
+      if(totalSelected()<dyn.count){ counts[id]=(counts[id]||0)+1; renderPick(); }
+    }));
+    comboContent.querySelectorAll('[data-minus]').forEach(b=>b.addEventListener('click',()=>{
+      const id=b.getAttribute('data-minus');
+      counts[id]=Math.max(0,(counts[id]||0)-1); renderPick();
+    }));
+  }
+
+  const needsFlavorStep = () => Object.keys(counts).includes('geek-flavor') && counts['geek-flavor']>0 && dyn.from==='vapes';
+  const needsSnackStep  = !!item.snackChoice || !!dyn.snackFree;
+
+  function renderOptions(){
+    step=2;
+    const pieces=[];
+    if(needsFlavorStep()){
+      const sel = `<div class="option-row">
+          <label><strong>Flavor for Flavored Geek</strong></label>
+          <select id="bundleFlavorSel">
+            ${VAPE_FLAVORS.map(f=>`<option value="${f}">${f}</option>`).join('')}
+          </select>
+        </div>`;
+      pieces.push(sel);
+    }
+    if(needsSnackStep()){
+      const snackRows = SNACK_IDS.map(id=>{
+        const s = MENU.extras.find(x=>x.id===id);
+        return `<label class="option-row"><span>${s.name}</span><input type="radio" name="snack" value="${id}"></label>`;
+      }).join('');
+      pieces.push(`<div class="option-list">${snackRows}</div>`);
+    }
+
+    comboSteps.innerHTML = `1. Pick Items · <strong>2. Options</strong> · 3. Confirm`;
+    comboContent.innerHTML = pieces.join('') || `<div class="muted">No extra options for this bundle.</div>`;
+    comboPrev.style.display='inline-flex';
+    comboNext.textContent='Next';
+    // require selections if present
+    let needSnack=needsSnackStep(); let needFlavor=needsFlavorStep();
+    const updateDisabled = ()=>{
+      comboNext.disabled = (needSnack && !selectedSnack) || (needFlavor && !flavoredFlavor);
+    };
+    updateDisabled();
+
+    const flavorSel=document.getElementById('bundleFlavorSel');
+    if(flavorSel){
+      flavoredFlavor=flavorSel.value; flavorSel.addEventListener('change',()=>{ flavoredFlavor=flavorSel.value; updateDisabled(); });
+    }
+    comboContent.querySelectorAll('input[name="snack"]').forEach(r=>{
+      r.addEventListener('change',()=>{ selectedSnack=r.value; updateDisabled(); });
+    });
+  }
+
+  function renderConfirm(){
+    step=3;
+    // compute price
+    const sum = Object.entries(counts).reduce((acc,[id,c])=>{
+      const it = pool.find(x=>x.id===id); return acc + (it?it.price*c:0);
+    },0);
+    const discounted = +(sum * (1 - (dyn.discountPct||0)/100)).toFixed(2);
+    const finalPrice = discounted; // snack is free if snackFree; already excluded
+    const descParts=[];
+    Object.entries(counts).forEach(([id,c])=>{
+      const it=pool.find(x=>x.id===id);
+      if(!it) return;
+      let note='';
+      if(it.id==='geek-flavor' && flavoredFlavor){ note=` (Flavor: ${flavoredFlavor})`; }
+      descParts.push(`${c}× ${it.name}${note}`);
+    });
+    const snackName = selectedSnack ? (MENU.extras.find(x=>x.id===selectedSnack)||{}).name : null;
+
+    comboSteps.innerHTML = `1. Pick Items · 2. Options · <strong>3. Confirm</strong>`;
+    comboContent.innerHTML = `<div class="summary" style="gap:10px;">
+      <div><strong>Selection:</strong> ${descParts.join(', ')}</div>
+      ${snackName?`<div><strong>Snack:</strong> ${snackName} (free)</div>`:''}
+      <div><strong>Bundle Price:</strong> ${currency(finalPrice)}</div>
+      <div class="muted">Discount applied: ${dyn.discountPct||0}%</div>
+    </div>`;
+    comboPrev.style.display='inline-flex';
+    comboNext.textContent='Add to Cart';
+    comboNext.disabled=false;
+
+    comboNext.onclick = ()=>{
+      const metaBits=[];
+      if(flavoredFlavor) metaBits.push(`Flavor: ${flavoredFlavor}`);
+      if(snackName) metaBits.push(`Snack: ${snackName}`);
+      addToCart({
+        id:item.id,
+        name:item.name,
+        unitPrice:finalPrice,
+        qty:qty||1,
+        type:item.type,
+        meta: metaBits.join(' • ') || null,
+        pick: counts
+      });
+      comboModal.close();
+    };
+  }
+
+  comboPrev.onclick = ()=>{
+    if(step===2){ renderPick(); step=1; }
+    else if(step===3){ renderOptions(); step=2; }
+  };
+  comboNext.onclick = ()=>{
+    if(step===1){ renderOptions(); }
+    else if(step===2){ renderConfirm(); }
+  };
+
+  renderPick();
+  comboModal.showModal();
+}
+
+/* ---- Flavor picker for single items ---- */
 function openFlavorPicker(item, qty){
   comboTitle.textContent = `Choose Flavor — ${item.name}`;
   comboSteps.innerHTML = `<strong>1. Flavor</strong> · 2. Confirm`;
@@ -731,7 +1034,7 @@ function openFlavorPicker(item, qty){
   comboModal.showModal();
 }
 
-/* Strain picker for a fixed tier (Basic/Premium/Exotic) */
+/* ---- Strain picker for a fixed tier (Basic/Premium/Exotic) ---- */
 function openStrainPickerForTier(item, qty){
   const tier = item.tier;
   const group = STRAIN_GROUPS.find(g=>g.tier===tier);
