@@ -361,15 +361,18 @@ const MENU = {
     { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
-  /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
-  flowerEntry: [
-    { id:'basic-joint',   name:'Basic Joint',   price:150, type:'flower', tier:'Basic',   pickStrain:true },
-    { id:'basic-quarter', name:'Basic Quarter', price:150, type:'flower', tier:'Basic',   pickStrain:true },
-    { id:'premium-joint',   name:'Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
-    { id:'premium-quarter', name:'Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true },
-    { id:'exotic-joint',   name:'Exotic Joint',   price:350, type:'flower', tier:'Exotic',  pickStrain:true },
-    { id:'exotic-quarter', name:'Exotic Quarter', price:350, type:'flower', tier:'Exotic',  pickStrain:true }
-  ],
+/* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
+flowerEntry: [
+  { id:'basic-joint',   name:'Basic Joint',    price:150, type:'flower', tier:'Basic',   pickStrain:true },
+  { id:'basic-standard',name:'Standard Joint', price:100, type:'flower', tier:'Basic',   pickStrain:true },
+  { id:'basic-quarter', name:'Basic Quarter',  price:150, type:'flower', tier:'Basic',   pickStrain:true },
+
+  { id:'premium-joint',   name:'Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
+  { id:'premium-quarter', name:'Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true },
+  { id:'exotic-joint',    name:'Exotic Joint',    price:350, type:'flower', tier:'Exotic',  pickStrain:true },
+  { id:'exotic-quarter',  name:'Exotic Quarter',  price:350, type:'flower', tier:'Exotic',  pickStrain:true }
+],
+
 
   edibles: [
     { id:'brownie-6', name:'Brownie 6 pack', price:250, type:'edible' },
