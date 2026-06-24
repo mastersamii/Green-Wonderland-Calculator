@@ -59,6 +59,7 @@
 }
 
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
   html,body{
     margin:0;
     background:
@@ -93,6 +94,23 @@
   .btn.primary{background:linear-gradient(135deg,var(--leaf),#44a049);color:#fff;border:none}
   .btn.ghost{background:transparent}
   .chip{padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);font-weight:700;color:var(--muted);font-size:.85rem}
+
+
+
+  .category-nav{
+    position:sticky;top:0;z-index:20;
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:14px;padding:10px;margin-bottom:16px;
+    box-shadow:var(--shadow);
+  }
+  .category-nav a{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+    background:var(--chip);color:inherit;text-decoration:none;font-weight:700;font-size:.9rem;
+  }
+  .category-nav a:hover{filter:brightness(0.98)}
+  .section-anchor{scroll-margin-top:90px}
 
   .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px}
   @media (max-width:980px){.grid{grid-template-columns:1fr}}
@@ -188,7 +206,7 @@
 </style>
 </head>
 <body>
-<div class="container">
+<div class="container" id="top">
   <header>
     <div class="brand">
       <div class="logo"><span>🌿</span></div>
@@ -205,22 +223,32 @@
     </div>
   </header>
 
+  <nav class="category-nav" aria-label="Menu category shortcuts">
+    <a href="#top">⬆️ Top</a>
+    <a href="#section-vapes">💨 Vapes</a>
+    <a href="#section-refills">🚬 Refills</a>
+    <a href="#section-flower">🌿 Flower</a>
+    <a href="#section-edibles">🍬 Edibles</a>
+    <a href="#section-bundles">📦 Bundles</a>
+    <a href="#section-extras">🛍️ Accessories</a>
+  </nav>
+
   <div class="grid">
     <!-- LEFT -->
     <section class="panel">
       <h2>Menu</h2>
       <div class="content">
-        <h3 style="margin:0 0 6px">Geek Bars & Vapes</h3>
+        <h3 id="section-vapes" class="section-anchor" style="margin:0 0 6px">Geek Bars & Vapes</h3>
         <div class="cards" id="vapes"></div>
 
         <div class="divider"></div>
 
-        <h3 style="margin:0 0 6px">Refills</h3>
+        <h3 id="section-refills" class="section-anchor" style="margin:0 0 6px">Refills</h3>
         <div class="cards" id="refills"></div>
 
         <div class="divider"></div>
 
-        <h3 style="margin:0 0 6px">Flower</h3>
+        <h3 id="section-flower" class="section-anchor" style="margin:0 0 6px">Flower</h3>
         <!-- Three horizontal rows: Basic, Premium, Exotic -->
         <div class="flower-rows">
           <div class="flower-row">
@@ -235,17 +263,17 @@
 
         <div class="divider"></div>
 
-        <h3 style="margin:0 0 6px">Edibles</h3>
+        <h3 id="section-edibles" class="section-anchor" style="margin:0 0 6px">Edibles</h3>
         <div class="cards" id="edibles"></div>
 
         <div class="divider"></div>
 
-        <h3 style="margin:0 0 6px">Bundles</h3>
+        <h3 id="section-bundles" class="section-anchor" style="margin:0 0 6px">Bundles</h3>
         <div class="cards" id="bundles"></div>
 
         <div class="divider"></div>
 
-        <h3 style="margin:0 0 6px">Accessories & Snacks</h3>
+        <h3 id="section-extras" class="section-anchor" style="margin:0 0 6px">Accessories & Snacks</h3>
         <div class="cards" id="extras"></div>
       </div>
     </section>
@@ -445,7 +473,8 @@ const RECIPE_MAP = {
   'slushie'  : { 'Packaged Weed':1 }
 };
 
-const currency = n => '$'+Number(n).toFixed(2);
+const roundMoney = n => Math.round(Number(n)||0);
+const currency = n => '$'+roundMoney(n).toLocaleString();
 
 /* =========================
    STATE / PERSIST
@@ -601,11 +630,12 @@ document.getElementById('zoneSelect').addEventListener('change',e=>{
 function computePromotions(){ return { discount:0, notes:[] }; }
 
 function renderTotals(){
-  const subtotal = state.cart.reduce((s,l)=>s + l.unitPrice*l.qty, 0);
-  const manual = +(subtotal*(state.discountPct/100)).toFixed(2);
+  const subtotal = roundMoney(state.cart.reduce((s,l)=>s + l.unitPrice*l.qty, 0));
+  const manual = roundMoney(subtotal*(state.discountPct/100));
   const promo = computePromotions();
+  promo.discount = roundMoney(promo.discount);
   const fee = state.fulfillment==='delivery' ? (ZONE_FEES[state.deliveryZone]||0) : 0;
-  const total = subtotal + fee - manual - promo.discount;
+  const total = roundMoney(subtotal + fee - manual - promo.discount);
   document.getElementById('subtotal').textContent=currency(subtotal);
   document.getElementById('discount').textContent='-'+currency(manual);
   document.getElementById('promotions').textContent='-'+currency(promo.discount);
@@ -978,7 +1008,7 @@ function openDynamicBundleWizard(item, qty){
     const sum = Object.entries(counts).reduce((acc,[id,c])=>{
       const it = pool.find(x=>x.id===id); return acc + (it?it.price*c:0);
     },0);
-    const discounted = +(sum * (1 - (dyn.discountPct||0)/100)).toFixed(2);
+    const discounted = roundMoney(sum * (1 - (dyn.discountPct||0)/100));
     const finalPrice = discounted; // snack is free if snackFree; already excluded
     const descParts=[];
     Object.entries(counts).forEach(([id,c])=>{
@@ -1197,21 +1227,21 @@ function buildHistoryReceiptText(h){
     discountParts.push(`promotions -${currency(h.promoDiscount||0)}`);
   }
 
-const storeCut = +(h.total * 0.10).toFixed(2);
-const employeeCut = +(h.total - storeCut).toFixed(2);
+  const storeCut = roundMoney(h.total * 0.10);
+  const employeeCut = roundMoney(h.total - storeCut);
 
-const lines = [
-  '**Green Wonderland Receipt**',
-  `Date/Time: ${dt}`,
-  '',
-  '**Ordered**',
-  ...h.items.map(i=>`- ${i.qty}x ${i.name}${i.meta?` (${i.meta})`:''} — ${currency(i.lineTotal)}`),
-  '',
-  ...(discountParts.length ? [`Discount: ${discountParts.join(' + ')}`] : []),
-  `Price: ${currency(h.total)}`,
-  `Store (10%): ${currency(storeCut)}`,
-  `Employee Keeps: ${currency(employeeCut)}`
-];
+  const lines = [
+    '**Green Wonderland Receipt**',
+    `Date/Time: ${dt}`,
+    '',
+    '**Ordered**',
+    ...h.items.map(i=>`- ${i.qty}x ${i.name}${i.meta?` (${i.meta})`:''} — ${currency(i.lineTotal)}`),
+    '',
+    ...(discountParts.length ? [`Discount: ${discountParts.join(' + ')}`] : []),
+    `Price: ${currency(h.total)}`,
+    `Store (10% of sale): ${currency(storeCut)}`,
+    `Employee Keeps: ${currency(employeeCut)}`
+  ];
 
   return lines.join('\n');
 }
@@ -1224,14 +1254,15 @@ function copyHistoryReceipt(id){
 
 function checkout(){
   if(!state.cart.length){ alert('Your order is empty.'); return; }
-  const subtotal=state.cart.reduce((s,l)=>s+l.unitPrice*l.qty,0);
-  const manual=+(subtotal*(state.discountPct/100)).toFixed(2);
+  const subtotal=roundMoney(state.cart.reduce((s,l)=>s+l.unitPrice*l.qty,0));
+  const manual=roundMoney(subtotal*(state.discountPct/100));
   const promo=computePromotions();
+  promo.discount=roundMoney(promo.discount);
   const fee=state.fulfillment==='delivery'?(ZONE_FEES[state.deliveryZone]||0):0;
-  const total=+(subtotal+fee-manual-promo.discount).toFixed(2);
+  const total=roundMoney(subtotal+fee-manual-promo.discount);
   const entry={ id:Date.now(),
-    items:state.cart.map(l=>({id:l.id,name:l.name,qty:l.qty,unit:l.unitPrice,meta:l.meta||null,pick:l.pick||null,type:l.type||'extra',lineTotal:+(l.unitPrice*l.qty).toFixed(2)})),
-    discountPct:state.discountPct, subtotal:+subtotal.toFixed(2), deliveryFee:fee, promoDiscount:promo.discount, manualDiscount:manual, total };
+    items:state.cart.map(l=>({id:l.id,name:l.name,qty:l.qty,unit:l.unitPrice,meta:l.meta||null,pick:l.pick||null,type:l.type||'extra',lineTotal:roundMoney(l.unitPrice*l.qty)})),
+    discountPct:state.discountPct, subtotal:subtotal, deliveryFee:fee, promoDiscount:promo.discount, manualDiscount:manual, total };
   state.history.unshift(entry); persistHistory();
   state.cart=[]; state.discountPct=0; persist(); renderAll(); selectTab('summary');
 }
