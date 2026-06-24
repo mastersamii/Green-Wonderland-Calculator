@@ -348,82 +348,82 @@
 ========================= */
 const MENU = {
   vapes: [
-    { id:'geek-plain',  name:'Geek Bar (Plain)',    price:800,  type:'vape' },
-    { id:'geek-flavor', name:'Geek Bar (Flavored)', price:1000, type:'vape', needsFlavor: true },
-    { id:'geek-thc',    name:'Geek Bar (THC)',      price:1100, type:'vape' },
+    { id:'geek-plain',  name:'💨Geek Bar (Plain)',    price:800,  type:'vape' },
+    { id:'geek-flavor', name:'🍓Geek Bar (Flavored)', price:1000, type:'vape', needsFlavor: true },
+    { id:'geek-thc',    name:'🌿Geek Bar (THC)',      price:1100, type:'vape' },
 
-    { id:'penjamin', name:'Penjamin', price:500, type:'vape' },
+    { id:'penjamin', name:'🔋Penjamin', price:500, type:'vape' },
     { id:'bong',     name:'Bong',     price:700, type:'accessory' }
   ],
 
   refills: [
-    { id:'refill-plain',  name:'Refill: Geek Bar (Plain)',    price:400, type:'service' },
-    { id:'refill-flavor', name:'Refill: Geek Bar (Flavored)', price:400, type:'service', needsFlavor: true },
-    { id:'refill-thc',    name:'Refill: Geek Bar (THC)',      price:500, type:'service' }
+    { id:'refill-plain',  name:'🚬Refill: Geek Bar (Plain)',    price:400, type:'service' },
+    { id:'refill-flavor', name:'🍉Refill: Geek Bar (Flavored)', price:400, type:'service', needsFlavor: true },
+    { id:'refill-thc',    name:'🌿Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
 /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
 flowerEntry: [
-  { id:'basic-standard',  name:'Standard Joint',  price:100, type:'flower', tier:'Basic' },
+  { id:'basic-standard',  name:'🚬Standard Joint',  price:100, type:'flower', tier:'Basic' },
 
-  { id:'premium-joint',   name:'Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
-  { id:'premium-quarter', name:'Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true }
+  { id:'premium-joint',   name:'👑Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
+  { id:'premium-quarter', name:'🌿Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true }
 ],
 
   edibles: [
-    { id:'brownie-6', name:'Brownie 6 pack', price:250, type:'edible' },
-    { id:'gummy-3',   name:'Gummy 3 pack',  price:250, type:'edible' },
-    { id:'slushie',   name:'Slushie',       price:250, type:'edible' },
+    { id:'brownie-6', name:'🍫Brownie 6 pack', price:250, type:'edible' },
+    { id:'gummy-3',   name:'🧸Gummy 3 pack',  price:250, type:'edible' },
+    { id:'slushie',   name:'🥤Slushie',       price:250, type:'edible' },
   ],
 
   /* Bundles */
   bundles: [
     
-    { id:'bd-starter', name:'Starter Pack (Plain)', price:1100, type:'bundle',
+    { id:'bd-starter', name:'📦Starter Pack (Plain)', price:1100, type:'bundle',
       components:[{id:'geek-plain',qty:1},{id:'refill-plain',qty:1}],
       snackChoice:true,
       description:'Geek Bar (Plain) + Refill (Plain) + snack of your choice.' },
 
-    { id:'bd-flavor-fan', name:'Flavor Fan', price:1250, type:'bundle',
+    { id:'bd-flavor-fan', name:'🎉Flavor Fan', price:1250, type:'bundle',
       components:[{id:'geek-flavor',qty:1,needsFlavor:true},{id:'refill-flavor',qty:1,needsFlavor:true}],
       snackChoice:true,
       description:'Flavored Geek Bar + Refill (Flavored) + snack of your choice.' },
 
-    { id:'bd-thc-chill', name:'THC Chill', price:1450, type:'bundle',
+    { id:'bd-thc-chill', name:'😎THC Chill', price:1450, type:'bundle',
       components:[{id:'geek-thc',qty:1},{id:'refill-thc',qty:1}],
       snackChoice:true,
       description:'Geek Bar (THC) + Refill (THC) + snack of your choice.' },
 
     /* Vape mix bundles (percentage discount) */
-    { id:'bd-vape-duo',  name:'Vape Duo (any 2)',  type:'bundle',
+    { id:'bd-vape-duo',  name:'💨Vape Duo (any 2)',  type:'bundle',
       dynamic:{ from:'vapes', count:2, discountPct:10 }, description:'Pick any 2 vapes and get 10% off.' },
 
-    { id:'bd-vape-trio', name:'Vape Trio (any 3)', type:'bundle',
+    { id:'bd-vape-trio', name:'🔥Vape Trio (any 3)', type:'bundle',
       dynamic:{ from:'vapes', count:3, discountPct:15 }, description:'Pick any 3 vapes and get 15% off.' },
 
     /* Refill packs (with snack choice, discount on refills; snack is free) */
-    { id:'bd-refill-2', name:'Refill 2-Pack + Snack', type:'bundle',
+    { id:'bd-refill-2', name:'🚬Refill 2-Pack + Snack', type:'bundle',
       dynamic:{ from:'refills', count:2, discountPct:10, snackFree:true }, snackChoice:true,
       description:'Pick any 2 refills (10% off) and a free snack.' },
 
-    { id:'bd-refill-3', name:'Refill 3-Pack + Snack', type:'bundle',
+    { id:'bd-refill-3', name:'🎁Refill 3-Pack + Snack', type:'bundle',
       dynamic:{ from:'refills', count:3, discountPct:15, snackFree:true }, snackChoice:true,
       description:'Pick any 3 refills (15% off) and a free snack.' },
 
     /* Existing edible duo stays */
-    { id:'bd-edibles', name:'Edible Duo (pick 2)', price:450, type:'bundle', ediblesIncluded:2,
+    { id:'bd-edibles', name:'🍬Edible Duo (pick 2)', price:450, type:'bundle', ediblesIncluded:2,
       description:'Choose any 2 edible packs.' }
   ],
 
   extras: [
-    { id:'lighter',   name:'Lighter',        price:13,   type:'extra' },
-    { id:'wallet',    name:'Wallet',         price:650,  type:'extra' },
-    { id:'lunch-box', name:'Lunch Box',      price:715,  type:'extra' },
-    { id:'green-rolls', name:'Green Rolls',  price:300,  type:'extra' },
-    { id:'almond-joy', name:'Almond Joy',    price:25,   type:'extra' },
-    { id:'rice-kris',  name:'Rice Krispies', price:30,   type:'extra' },
-    { id:'cocoa',      name:'Cocoa Powder',  price:25,   type:'extra' },
-    { id:'jolly',      name:'Jolly Ranchers',price:25,   type:'extra' }
+    { id:'lighter',   name:'🔥Lighter',        price:13,   type:'extra' },
+    { id:'wallet',    name:'👛Wallet',         price:650,  type:'extra' },
+    { id:'lunch-box', name:'🥡Lunch Box',      price:715,  type:'extra' },
+    { id:'green-rolls', name:'📜Green Rolls',  price:300,  type:'extra' },
+    { id:'almond-joy', name:'🥥Almond Joy',    price:25,   type:'extra' },
+    { id:'rice-kris',  name:'🌾Rice Krispies', price:30,   type:'extra' },
+    { id:'cocoa',      name:'🍫Cocoa Powder',  price:25,   type:'extra' },
+    { id:'jolly',      name:'🍬Jolly Ranchers',price:25,   type:'extra' }
   ]
 };
 
