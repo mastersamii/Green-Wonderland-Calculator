@@ -111,7 +111,9 @@
   }
   .panel h2{margin:0;padding:14px 16px;font-size:1rem;border-bottom:1px solid var(--border);background:rgba(255,255,255,.04)}
   .panel .content{padding:14px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .cards{display:grid;grid-template-columns:repeat(3,minmax(230px,1fr));gap:12px}
+  @media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(220px,1fr))}}
+  @media (max-width:640px){.cards{grid-template-columns:1fr}}
 
   .card{
     background:var(--card);
@@ -173,11 +175,14 @@
   .option-row{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card)}
   .option-row label{display:flex;align-items:center;gap:8px}
 
-  /*  rows: each row has exactly two cards (Joint, Quarter) */
+  /* rows: three cards per row on desktop */
   .-rows{display:grid;gap:12px}
-  .cards-2{display:grid;grid-template-columns:repeat(2,minmax(230px,1fr));gap:12px}
+  .cards-3{display:grid;grid-template-columns:repeat(3,minmax(230px,1fr));gap:12px}
   @media (max-width:980px){
-    .cards-2{grid-template-columns:1fr}
+    .cards-3{grid-template-columns:repeat(2,minmax(220px,1fr))}
+  }
+  @media (max-width:640px){
+    .cards-3{grid-template-columns:1fr}
   }
   .-row h4{margin:0 0 6px;font-size:1rem}
 </style>
@@ -220,15 +225,11 @@
         <div class="flower-rows">
           <div class="flower-row">
             <h4>Basic</h4>
-            <div class="cards-2" id="flower-basic"></div>
+            <div class="cards-3" id="flower-basic"></div>
           </div>
           <div class="flower-row">
             <h4>Premium</h4>
-            <div class="cards-2" id="flower-premium"></div>
-          </div>
-          <div class="flower-row">
-            <h4>Exotic</h4>
-            <div class="cards-2" id="flower-exotic"></div>
+            <div class="cards-3" id="flower-premium"></div>
           </div>
         </div>
 
@@ -363,19 +364,16 @@ const MENU = {
 
 /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
 flowerEntry: [
-  { id:'basic-joint',     name:'Basic Joint',     price:150, type:'flower', tier:'Basic',   pickStrain:true },
   { id:'basic-standard',  name:'Standard Joint',  price:100, type:'flower', tier:'Basic' },
-  { id:'basic-quarter',   name:'Basic Quarter',   price:150, type:'flower', tier:'Basic',   pickStrain:true },
 
   { id:'premium-joint',   name:'Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
-  { id:'premium-quarter', name:'Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true },
-  { id:'exotic-joint',    name:'Exotic Joint',    price:350, type:'flower', tier:'Exotic',  pickStrain:true },
-  { id:'exotic-quarter',  name:'Exotic Quarter',  price:350, type:'flower', tier:'Exotic',  pickStrain:true }
+  { id:'premium-quarter', name:'Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true }
 ],
 
   edibles: [
     { id:'brownie-6', name:'Brownie 6 pack', price:250, type:'edible' },
     { id:'gummy-3',   name:'Gummy 3 pack',  price:250, type:'edible' },
+    { id:'slushie',   name:'Slushie',       price:250, type:'edible' },
   ],
 
   /* Bundles */
@@ -431,9 +429,7 @@ flowerEntry: [
 
 /* Flower strains */
 const STRAIN_GROUPS = [
-  { tier:'Basic', price:150, items:['AK-47','Sour Diesel','Blue Dream'] },
-  { tier:'Premium', price:250, items:['Bubble Berry','Trainwreck','OG Kush','Gorilla Glue'] },
-  { tier:'Exotic', price:350, items:['Northern Lights'] }
+  { tier:'Premium', price:250, items:['AK-47','Sour Diesel','Blue Dream','Bubble Berry','Trainwreck','OG Kush','Gorilla Glue','Northern Lights'] }
 ];
 
 /* Flavors for flavored Geek Bar / Refill */
@@ -445,7 +441,8 @@ const SNACK_IDS = ['almond-joy','rice-kris','jolly'];
 /* RECIPE MAP for edibles (for ingredients tab) */
 const RECIPE_MAP = {
   'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
-  'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 }
+  'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 },
+  'slushie'  : { 'Packaged Weed':1 }
 };
 
 const currency = n => '$'+Number(n).toFixed(2);
@@ -514,11 +511,10 @@ function renderCards(){
   // Flower rows
   document.getElementById('flower-basic').innerHTML   = MENU.flowerEntry.filter(f=>f.tier==='Basic').map(cardHTML).join('');
   document.getElementById('flower-premium').innerHTML = MENU.flowerEntry.filter(f=>f.tier==='Premium').map(cardHTML).join('');
-  document.getElementById('flower-exotic').innerHTML  = MENU.flowerEntry.filter(f=>f.tier==='Exotic').map(cardHTML).join('');
 
   const all = [...MENU.vapes, ...MENU.refills, ...MENU.edibles, ...MENU.bundles, ...MENU.extras, ...MENU.flowerEntry];
 
-  document.querySelectorAll('.cards .card, .cards-2 .card').forEach(card=>{
+  document.querySelectorAll('.cards .card, .cards-3 .card').forEach(card=>{
     let count=1; const out=card.querySelector('output');
     card.querySelector('button[aria-label="dec"]')?.addEventListener('click',()=>{ count=Math.max(1,count-1); out.value=count; });
     card.querySelector('button[aria-label="inc"]')?.addEventListener('click',()=>{ count++; out.value=count; });
@@ -643,10 +639,16 @@ function renderHistory(){
         </ul>
       </details>
       <div class="toolrow" style="justify-content:flex-end">
+        <button class="btn" data-copy-receipt="${h.id}">Copy Receipt</button>
         <button class="btn" data-reorder="${h.id}">Reorder</button>
         <button class="btn ghost" data-delete="${h.id}">Delete</button>
       </div>
     </article>`).join('');
+
+  list.querySelectorAll('[data-copy-receipt]').forEach(b=>b.addEventListener('click',()=>{
+    const id=+b.getAttribute('data-copy-receipt');
+    copyHistoryReceipt(id);
+  }));
 
   list.querySelectorAll('[data-reorder]').forEach(b=>b.addEventListener('click',()=>{
     const id=+b.getAttribute('data-reorder');
@@ -1185,6 +1187,36 @@ document.getElementById('exportIngBtn').addEventListener('click',()=>{
    INIT / THEME / CHECKOUT
 ========================= */
 function renderAll(){ renderCards(); renderCart(); renderFulfillment(); renderTotals(); renderDiscount(); renderIngredients(); renderHistory(); }
+function buildHistoryReceiptText(h){
+  const dt = new Date(h.id).toLocaleString();
+  const discountParts = [];
+  if((h.discountPct||0)>0 || (h.manualDiscount||0)>0){
+    discountParts.push(`${h.discountPct||0}% off (-${currency(h.manualDiscount||0)})`);
+  }
+  if((h.promoDiscount||0)>0){
+    discountParts.push(`promotions -${currency(h.promoDiscount||0)}`);
+  }
+
+  const lines = [
+    '**Green Wonderland Receipt**',
+    `Date/Time: ${dt}`,
+    '',
+    '**Ordered**',
+    ...h.items.map(i=>`- ${i.qty}x ${i.name}${i.meta?` (${i.meta})`:''} — ${currency(i.lineTotal)}`),
+    '',
+    ...(discountParts.length ? [`Discount: ${discountParts.join(' + ')}`] : []),
+    `Price: ${currency(h.total)}`
+  ];
+
+  return lines.join('\n');
+}
+
+function copyHistoryReceipt(id){
+  const h = state.history.find(x=>x.id===id);
+  if(!h){ alert('Order not found.'); return; }
+  navigator.clipboard.writeText(buildHistoryReceiptText(h)).then(()=>alert('Receipt copied for Discord!'));
+}
+
 function checkout(){
   if(!state.cart.length){ alert('Your order is empty.'); return; }
   const subtotal=state.cart.reduce((s,l)=>s+l.unitPrice*l.qty,0);
