@@ -393,9 +393,11 @@ const MENU = {
 /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
 flowerEntry: [
   { id:'basic-standard',  name:'🚬Standard Joint',  price:100, type:'flower', tier:'Basic' },
+  { id:'basic-blunt',     name:'🍂 Blunt',          price:125, type:'flower', tier:'Basic' },
 
   { id:'premium-joint',   name:'👑Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
-  { id:'premium-quarter', name:'🌿Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true }
+  { id:'premium-quarter', name:'🌿Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true },
+  { id:'premium-blunt',   name:'👑🍂 Premium Blunt', price:275, type:'flower', tier:'Premium', pickStrain:true }
 ],
 
   edibles: [
@@ -470,7 +472,9 @@ const SNACK_IDS = ['almond-joy','rice-kris','jolly'];
 const RECIPE_MAP = {
   'brownie-6': { 'Packaged Weed':1, 'Cocoa Powder':2 },
   'gummy-3'  : { 'Packaged Weed':1, 'Jolly Ranchers':2 },
-  'slushie'  : { 'Packaged Weed':1 }
+  'slushie'  : { 'Packaged Weed':1 },
+  'basic-blunt': { 'Packaged Weed Quarter':1, 'Tobacco Leaf':1 },
+  'premium-blunt': { 'Packaged Weed Quarter':1, 'Tobacco Leaf':1 }
 };
 
 const roundMoney = n => Math.round(Number(n)||0);
