@@ -1197,16 +1197,21 @@ function buildHistoryReceiptText(h){
     discountParts.push(`promotions -${currency(h.promoDiscount||0)}`);
   }
 
-  const lines = [
-    '**Green Wonderland Receipt**',
-    `Date/Time: ${dt}`,
-    '',
-    '**Ordered**',
-    ...h.items.map(i=>`- ${i.qty}x ${i.name}${i.meta?` (${i.meta})`:''} — ${currency(i.lineTotal)}`),
-    '',
-    ...(discountParts.length ? [`Discount: ${discountParts.join(' + ')}`] : []),
-    `Price: ${currency(h.total)}`
-  ];
+const storeCut = +(h.total * 0.10).toFixed(2);
+const employeeCut = +(h.total - storeCut).toFixed(2);
+
+const lines = [
+  '**Green Wonderland Receipt**',
+  `Date/Time: ${dt}`,
+  '',
+  '**Ordered**',
+  ...h.items.map(i=>`- ${i.qty}x ${i.name}${i.meta?` (${i.meta})`:''} — ${currency(i.lineTotal)}`),
+  '',
+  ...(discountParts.length ? [`Discount: ${discountParts.join(' + ')}`] : []),
+  `Price: ${currency(h.total)}`,
+  `Store (10%): ${currency(storeCut)}`,
+  `Employee Keeps: ${currency(employeeCut)}`
+];
 
   return lines.join('\n');
 }
