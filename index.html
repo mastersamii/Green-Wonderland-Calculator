@@ -385,17 +385,19 @@ const MENU = {
   ],
 
   refills: [
-    { id:'refill-plain',  name:'🚬Refill: Geek Bar (Plain)',    price:500, type:'service' },
-    { id:'refill-flavor', name:'🍉Refill: Geek Bar (Flavored)', price:500, type:'service', needsFlavor: true },
+    { id:'refill-plain',  name:'🚬Refill: Geek Bar (Plain)',    price:400, type:'service' },
+    { id:'refill-flavor', name:'🍉Refill: Geek Bar (Flavored)', price:400, type:'service', needsFlavor: true },
     { id:'refill-thc',    name:'🌿Refill: Geek Bar (THC)',      price:500, type:'service' }
   ],
 
 /* Flower entry points: Joint/Quarter per tier; strain chosen inside modal */
 flowerEntry: [
   { id:'basic-standard',  name:'🚬Standard Joint',  price:100, type:'flower', tier:'Basic' },
+  { id:'basic-blunt',     name:'🍂 Standard Blunt', price:125, type:'flower', tier:'Basic' },
 
   { id:'premium-joint',   name:'👑Premium Joint',   price:250, type:'flower', tier:'Premium', pickStrain:true },
-  { id:'premium-quarter', name:'🌿Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true }
+  { id:'premium-quarter', name:'🌿Premium Quarter', price:250, type:'flower', tier:'Premium', pickStrain:true },
+  { id:'premium-blunt',   name:'👑🍂 Premium Blunt', price:275, type:'flower', tier:'Premium', pickStrain:true }
 ],
 
   edibles: [
@@ -471,11 +473,13 @@ const RECIPE_MAP = {
   'brownie-6': {'Weed (1q)': 4, 'Cocoa Powder': 2},
   'gummy-3': {'Weed (1q)': 3, 'Jolly Ranchers': 2},
   'slushie': {'Lemons': 2, 'Weed (1q)': 2},
+
   'basic-standard': {'Rolling Paper': 1, 'Weed (1g)': 1},
   'premium-joint': {'Rolling Paper': 1, 'Weed (1g)': 1},
   'basic-blunt': {'Tobacco Leaf': 1, 'Weed (1g)': 1},
   'premium-blunt': {'Tobacco Leaf': 1, 'Weed (1g)': 1},
   'premium-quarter': {'Rolling Papers': 4, 'Weed (1oz)': 1},
+
   'geek-thc': {'Weed (1q)': 1},
   'refill-thc': {'Weed (1q)': 1}
 };
@@ -1181,25 +1185,37 @@ function openStrainPickerForTier(item, qty){
    INGREDIENTS
 ========================= */
 function aggregateIngredients(){
-  const add=(m,o)=>{ o[m]=(o[m]||0)+1; };
-  const tally={};
-  state.cart.forEach(line=>{
-    if(RECIPE_MAP[line.id]){
-      for(const [ing,count] of Object.entries(RECIPE_MAP[line.id])){
-        for(let i=0;i<count*line.qty;i++) add(ing,tally);
-      }
+  const tally = {};
+  const addRecipe = (id, qty=1) => {
+    const recipe = RECIPE_MAP[id];
+    if(!recipe) return;
+    for(const [ing,count] of Object.entries(recipe)){
+      tally[ing] = (tally[ing] || 0) + (count * qty);
     }
+  };
+
+  state.cart.forEach(line=>{
+    const lineQty = line.qty || 1;
+
+    // Normal single items
+    addRecipe(line.id, lineQty);
+
+    // Dynamic bundles and edible bundles store selected item IDs in line.pick
     if(line.pick){
       for(const [id,c] of Object.entries(line.pick)){
-        if(RECIPE_MAP[id]){
-          for(const [ing,n] of Object.entries(RECIPE_MAP[id])){
-            const total = n * c * (line.qty||1);
-            tally[ing]=(tally[ing]||0)+total;
-          }
-        }
+        addRecipe(id, c * lineQty);
       }
     }
+
+    // Fixed bundles like Starter Pack / Flavor Fan / THC Chill
+    const bundle = MENU.bundles.find(b=>b.id===line.id);
+    if(bundle && bundle.components){
+      bundle.components.forEach(c=>{
+        addRecipe(c.id, (c.qty || 1) * lineQty);
+      });
+    }
   });
+
   return tally;
 }
 function renderIngredients(){
